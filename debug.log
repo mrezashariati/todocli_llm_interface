@@ -1,0 +1,10 @@
+2024-03-29 14:34:57,371 [INFO] running command: todo --location
+2024-03-29 14:34:57,520 [INFO] todo_location finished
+2024-03-29 14:34:57,521 [INFO] removed /Users/mohamadrezashariati/.toduh
+2024-03-29 14:34:57,521 [INFO] running command: todo add 'testing todo_add' --priority 1
+2024-03-29 14:34:57,587 [INFO] todo_add finished
+2024-03-29 14:35:32,162 [INFO] running command: todo --location
+2024-03-29 14:35:32,218 [INFO] todo_location finished
+2024-03-29 14:35:32,219 [INFO] removed /Users/mohamadrezashariati/.toduh
+2024-03-29 14:35:32,219 [INFO] running command: todo add 'testing todo_add' --priority 1
+2024-03-29 14:35:32,277 [INFO] todo_add finished
