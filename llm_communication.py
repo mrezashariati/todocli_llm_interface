@@ -1,3 +1,46 @@
+# ### TODO
+# - implement scenarios. first run them by hand. start from simple single step and continue with more complex:
+#     - adding task (1 step)
+#         - "can you add task a and b to my homework list?"
+#     - listing tasks (1 step)
+#         - "can you list my items in games wish list?"
+#     - moving tasks to new context (1 step)
+#         - "can you move the items in study context to hardwork context?"
+#     - modifying task attributes (2 step)
+#         - "can you change the name of elden ring to elden lord?"
+#     - removing context (1 step)
+#         - "can you remove my study list?"
+#     - removing task (2 steps)
+#         - 'can you remove the second item in my games wish list?'
+#     - merging contexts (2 steps)
+#         - "can you merge best games context and games wish list context?"
+#     - adding deadline, start, period or any sort of time (2 step)
+#         - "can you add a deadline for my study list for tomorrow?"
+#     - mark task as done (2 steps)
+#         - "can you mark elden ring from my games wish list as done?"
+# - json won't parse if a character is extra or missing. make it robust.
+# - read some blog posts about the same software solutions
+# - connect function calling with llm and test a few basic scenarios
+# - enhance prompt:
+#     - tune tempereture. Start with 0 temperature
+# - Frontend: use streamlit
+
+# ### Helper functions
+# - find a task by name -> get_task_id(task_name) returns success ? task_id : None
+
+# ### Notes:
+# - spell checking. may need to first find the correct task title and id.
+# - may be good to store the last n characters of the conversation and input it as context to the model.
+# - best way for remote function calling in python
+# - model may perform repetitive operations. when asked to merge, it added some tasks first which is wrong.
+# - can pass history in each request to enrich the propmt.
+# - can pass the output of todo --flat in each request to enrich the promp.
+# - can let the model hallucinate to see other scenarios and test cases and the model's response
+# - can specify the steps the model needs to take to respond for each specific query and command
+
+# ### Questions:
+# - design a feedback loop. how the model is meant to know the meaning of errors?
+
 import json
 import datetime
 import subprocess
@@ -80,7 +123,7 @@ def todo_add(
     Returns:
         None
     """
-    command = f"todo add '{title}'"
+    command = f"""todo add \"{title}\""""
     if deadline:
         command += f" --deadline {deadline}"
     if start:
@@ -154,7 +197,7 @@ def todo_task(
     if priority:
         command += f" --priority {priority}"
     if title:
-        command += f" --title '{title}'"
+        command += f""" --title \"{title}\""""
     if depends_on:
         command += " --depends-on"
         for dep in depends_on:
@@ -422,7 +465,6 @@ if __name__ == "__main__":
     with open("./aws_api_quota_remaining", "r") as f:
         aws_api_quota_remaining = int(f.readlines()[0].strip())
 
-
     with open("./aws_api.key", "r") as f:
         AWS_API_KEY = f.readlines()[0].strip()
 
@@ -435,7 +477,16 @@ if __name__ == "__main__":
         shutil.rmtree(todo_loc)
         logger.info(f"removed {todo_loc}")
 
-    USER_PROMPT = input("User: ")
+    inputs = []
+    print("Prompt (when finished, write cooknow): ")
+    while True:
+        inputs.append(input())
+        if "cooknow" in inputs[-1]:
+            inputs[-1] = inputs[-1].split("cooknow")[0]
+            USER_PROMPT = "\n".join(inputs)
+            break
+    logging.info(f"user prompt: {USER_PROMPT}")
+
     FULL_PROMPT = BASE_PROMPT + f"\nUSER: {USER_PROMPT}\n"
 
     response = llama_generate(FULL_PROMPT, AWS_API_KEY)
