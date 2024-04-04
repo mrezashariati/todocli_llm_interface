@@ -5,7 +5,7 @@
 #     - listing tasks (1 step)
 #         - "can you list my items in games wish list?" ✅
 #     - moving tasks to new context (1 step)
-#         - "can you move the items in study context to hardwork context?" 
+#         - "can you move the items in study context to hardwork context?"
 #     - modifying task attributes (2 step)
 #         - "can you change the name of elden ring to elden lord?"
 #     - removing context (1 step)
@@ -19,6 +19,7 @@
 #     - mark task as done (2 steps)
 #         - "can you mark elden ring from my games wish list as done?"
 # - json won't parse if a character is extra or missing. make it robust.
+# - more robust way to map llm func params to actual func params based on their name. use string diff.
 # - read some blog posts about the same software solutions
 # - enhance prompt:
 #     - tune tempereture. Start with 0 temperature
@@ -41,13 +42,14 @@
 # - design a feedback loop. how the model is meant to know the meaning of errors?
 
 import json
-import datetime
 import subprocess
-import re
 import shutil
 from pathlib import Path
 import logging
 import requests
+from difflib import SequenceMatcher
+import numpy as np
+import inspect
 
 logging.basicConfig(
     level=logging.INFO,
@@ -404,39 +406,48 @@ def todo_location():
     return log_and_exec_process(command, "todo_location")
 
 
+functions_dict = {
+    "todo": todo,
+    "todo_add": todo_add,
+    "todo_ctx": todo_ctx,
+    "todo_done": todo_done,
+    "todo_future": todo_future,
+    "todo_history": todo_history,
+    "todo_location": todo_location,
+    "todo_mv": todo_mv,
+    "todo_ping": todo_ping,
+    "todo_purge": todo_purge,
+    "todo_rm": todo_rm,
+    "todo_rmctx": todo_rmctx,
+    "todo_search": todo_search,
+    "todo_task": todo_task,
+}
+
+
 def parse_llm_output(text):
-    return text.split("<JSON>")[1].split("<JSON/>")[0].strip()
-
-
-# TODO: communication between functions needed. Can use stack.
-def execution_process(queue):
-    functions_dict = {
-        "todo": todo,
-        "todo_add": todo_add,
-        "todo_ctx": todo_ctx,
-        "todo_done": todo_done,
-        "todo_future": todo_future,
-        "todo_history": todo_history,
-        "todo_location": todo_location,
-        "todo_mv": todo_mv,
-        "todo_ping": todo_ping,
-        "todo_purge": todo_purge,
-        "todo_rm": todo_rm,
-        "todo_rmctx": todo_rmctx,
-        "todo_search": todo_search,
-        "todo_task": todo_task,
-    }
-
-    execution_queue = json.loads(queue)
-
-    for f in execution_queue:
+    global functions_dict
+    execution_queue = []
+    processed = text.split("<JSON>")[1].split("<JSON/>")[0].strip()
+    processed = json.loads(processed)
+    for f in processed:
         func = (
             functions_dict[f["function"]] if f["function"] in functions_dict else None
         )
         if func:
-            logging.info(f["log"])
-            args = f["parameters"]
-            output = func(**args)
+            llm_named_args = list(f["parameters"].keys())
+            actual_named_args = inspect.getfullargspec(func).args
+            matching = string_matcher(llm_named_args, actual_named_args)
+            func_params = {matching[k]: val for k, val in f["parameters"].items()}
+            execution_queue.append((func, func_params, f["log"]))
+
+    return execution_queue
+
+
+# TODO: communication between functions needed. Can use stack.
+def execution_process(queue):
+    for func, func_params, log in queue:
+        logging.info(log)
+        output = func(**func_params)
 
 
 def llama_generate(prompt, api_token, max_gen_len=640, temperature=0.2, top_p=0.9):
@@ -457,6 +468,16 @@ def llama_generate(prompt, api_token, max_gen_len=640, temperature=0.2, top_p=0.
     logging.info(f"ramining AWS API calls: {aws_api_quota_remaining}")
 
     return json.loads(res.text)["body"]["generation"]
+
+
+def string_matcher(list_a, list_b):
+    similarities = np.zeros((len(list_a), len(list_b)))
+    for i, item_a in enumerate(list_a):
+        for j, item_b in enumerate(list_b):
+            similarities[i, j] = SequenceMatcher(None, item_a, item_b).ratio()
+
+    similarities_agg = np.argmax(similarities, 1)
+    return {item_a: list_b[similarities_agg[i]] for i, item_a in enumerate(list_a)}
 
 
 if __name__ == "__main__":
@@ -496,7 +517,6 @@ if __name__ == "__main__":
             logging.info(f"user prompt: {USER_PROMPT}")
             FULL_PROMPT = BASE_PROMPT + f"\nUSER: {USER_PROMPT}\n"
             response = llama_generate(FULL_PROMPT, AWS_API_KEY)
-            # print(parse_llm_output(response))
             execution_process(parse_llm_output(response))
             inputs = []
             logging.info("Operation finished. Waiting for the next request...")
