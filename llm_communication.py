@@ -5,28 +5,30 @@
 #     - listing tasks (1 step)
 #         - "can you list my items in games wish list?" ✅
 #     - moving tasks to new context (1 step)
-#         - "can you move the items in study context to hardwork context?"
+#         - "can you move the items in study context to hardwork context?" 🔄
 #     - modifying task attributes (2 step)
 #         - "can you change the name of elden ring to elden lord?"
 #     - removing context (1 step)
 #         - "can you remove my study list?"
-#     - removing task (2 steps)
-#         - 'can you remove the second item in my games wish list?'
+#     - removing task (2 steps) ✅
+#         - 'can you remove "bananas" and "rust" from my items?'
+#         - NOTE: not mentioning names in "" leads to error.
+#
 #     - merging contexts (2 steps)
 #         - "can you merge best games context and games wish list context?"
 #     - adding deadline, start, period or any sort of time (2 step)
 #         - "can you add a deadline for my study list for tomorrow?"
 #     - mark task as done (2 steps)
 #         - "can you mark elden ring from my games wish list as done?"
+# - find a task by name ✅
 # - json won't parse if a character is extra or missing. make it robust.
-# - more robust way to map llm func params to actual func params based on their name. use string diff.
+# - more robust way to map llm func params to actual func params based on their name. use string diff. ✅
 # - read some blog posts about the same software solutions
 # - enhance prompt:
 #     - tune tempereture. Start with 0 temperature
 # - Frontend: use streamlit
 
 # ### Helper functions
-# - find a task by name -> get_task_id(task_name) returns success ? task_id : None
 
 # ### Notes:
 # - spell checking. may need to first find the correct task title and id.
@@ -50,18 +52,23 @@ import requests
 from difflib import SequenceMatcher
 import numpy as np
 import inspect
+import re
 
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s [%(levelname)s] %(message)s",
-    handlers=[logging.FileHandler("debug.log"), logging.StreamHandler()],
+    handlers=[
+        logging.FileHandler("debug.log"),
+        # logging.StreamHandler()
+    ],
 )
 
 logger = logging.getLogger(__name__)
 
 
 def process_bash_output(o):
-    # TODO
+    pattern = r"\x1b\[\d*m"
+    o = re.sub(pattern, "", o)
     return o
 
 
@@ -270,9 +277,15 @@ def todo_rm(ids):
     Returns:
         None
     """
-    command = f"todo rm {' '.join(ids)}"
+    ids_int = []
+    for task_name in ids:
+        task_id = get_task_id(task_name)
+        if task_id:
+            ids_int.append(str(task_id))
+    if ids_int:
+        command = f"todo rm {' '.join(ids_int)}"
 
-    log_and_exec_process(command, "todo_rm")
+        log_and_exec_process(command, "todo_rm")
 
 
 def todo_ping(ids):
@@ -400,7 +413,6 @@ def todo_location():
         None
     """
 
-    # logging
     command = "todo --location"
 
     return log_and_exec_process(command, "todo_location")
@@ -450,7 +462,7 @@ def execution_process(queue):
         output = func(**func_params)
 
 
-def llama_generate(prompt, api_token, max_gen_len=640, temperature=0.2, top_p=0.9):
+def llama_generate(prompt, api_token, max_gen_len=320, temperature=0.2, top_p=0.9):
     global aws_api_quota_remaining
     url = "https://6xtdhvodk2.execute-api.us-west-2.amazonaws.com/dsa_llm/generate"
     body = {
@@ -480,6 +492,21 @@ def string_matcher(list_a, list_b):
     return {item_a: list_b[similarities_agg[i]] for i, item_a in enumerate(list_a)}
 
 
+def get_task_id(task_name):
+    task_list = list(
+        filter(lambda x: x, process_bash_output(todo(flat=True)).split("\n"))
+    )
+    ids = [task for task in task_list if task_name.lower() in task.lower()]
+    if len(ids) > 1:
+        logging.info("multiple tasks found!")
+        return False
+    elif len(ids) == 0:
+        logging.info(f"no tasks found including {task_name}!")
+        return False
+    else:
+        return int(ids[0].split("|")[0])
+
+
 if __name__ == "__main__":
     # Reading config variables
     with open("./aws_api_quota_remaining", "r") as f:
@@ -498,9 +525,10 @@ if __name__ == "__main__":
         logger.info(f"removed {todo_loc}")
 
     inputs = []
+    logging.info("**********\nSession Start.")
     print(
         """Prompt (
-        start operation: cooknow,
+        start operation: gg,
         exit: exit()
     ): """
     )
@@ -508,15 +536,22 @@ if __name__ == "__main__":
         inputs.append(input("// "))
         if "exit" in inputs[-1].lower():
             break
-        if "cooknow" in inputs[-1].lower():
-            inputs[-1] = inputs[-1].split("cooknow")[0]
+        if "gg" in inputs[-1].lower():
+            inputs[-1] = inputs[-1].split("gg")[0]
             USER_PROMPT = "\n".join(inputs)
             if not USER_PROMPT:
-                logging.info("Empty prompt. exiting...")
+                print.info("Empty prompt. exiting...")
                 break
             logging.info(f"user prompt: {USER_PROMPT}")
             FULL_PROMPT = BASE_PROMPT + f"\nUSER: {USER_PROMPT}\n"
+            print("Communicating with LLM...")
             response = llama_generate(FULL_PROMPT, AWS_API_KEY)
+            logging.info(
+                f"**********\nRaw LLM response:\n{response}\n**********",
+            )
+
             execution_process(parse_llm_output(response))
             inputs = []
-            logging.info("Operation finished. Waiting for the next request...")
+            print("Operation finished. Waiting for the next request...")
+
+    logging.info("Session End\n**********")
