@@ -1,11 +1,11 @@
 # ### TODO
 # - implement scenarios. first run them by hand. start from simple single step and continue with more complex:
 #     - adding task (1 step)
-#         - "can you add task a and b to my homework list?"
+#         - "can you add task a and b to my homework list?" ✅
 #     - listing tasks (1 step)
-#         - "can you list my items in games wish list?"
+#         - "can you list my items in games wish list?" ✅
 #     - moving tasks to new context (1 step)
-#         - "can you move the items in study context to hardwork context?"
+#         - "can you move the items in study context to hardwork context?" 
 #     - modifying task attributes (2 step)
 #         - "can you change the name of elden ring to elden lord?"
 #     - removing context (1 step)
@@ -20,7 +20,6 @@
 #         - "can you mark elden ring from my games wish list as done?"
 # - json won't parse if a character is extra or missing. make it robust.
 # - read some blog posts about the same software solutions
-# - connect function calling with llm and test a few basic scenarios
 # - enhance prompt:
 #     - tune tempereture. Start with 0 temperature
 # - Frontend: use streamlit
@@ -90,7 +89,7 @@ def todo(context="", flat=False, tidy=False):
     """
     command = f"todo"
     if context:
-        command += f"""\"{context}\""""
+        command += f""" \"{context}\""""
     if flat or tidy:
         command += " --flat" if flat else "--tidy"
 
@@ -478,18 +477,26 @@ if __name__ == "__main__":
         logger.info(f"removed {todo_loc}")
 
     inputs = []
-    print("Prompt (when finished, write cooknow): ")
+    print(
+        """Prompt (
+        start operation: cooknow,
+        exit: exit()
+    ): """
+    )
     while True:
-        inputs.append(input())
-        if "cooknow" in inputs[-1]:
+        inputs.append(input("// "))
+        if "exit" in inputs[-1].lower():
+            break
+        if "cooknow" in inputs[-1].lower():
             inputs[-1] = inputs[-1].split("cooknow")[0]
             USER_PROMPT = "\n".join(inputs)
-            break
-    logging.info(f"user prompt: {USER_PROMPT}")
-
-    FULL_PROMPT = BASE_PROMPT + f"\nUSER: {USER_PROMPT}\n"
-
-    response = llama_generate(FULL_PROMPT, AWS_API_KEY)
-    # print(parse_llm_output(response))
-
-    execution_process(parse_llm_output(response))
+            if not USER_PROMPT:
+                logging.info("Empty prompt. exiting...")
+                break
+            logging.info(f"user prompt: {USER_PROMPT}")
+            FULL_PROMPT = BASE_PROMPT + f"\nUSER: {USER_PROMPT}\n"
+            response = llama_generate(FULL_PROMPT, AWS_API_KEY)
+            # print(parse_llm_output(response))
+            execution_process(parse_llm_output(response))
+            inputs = []
+            logging.info("Operation finished. Waiting for the next request...")
