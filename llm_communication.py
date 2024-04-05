@@ -29,6 +29,8 @@ def process_bash_output(o):
 
 def log_and_exec_process(command, func_name):
     logging.info(f"running command: {command}")
+    print(f"running command: {command}")
+
     p = subprocess.run(["bash", "-c", command], capture_output=True, text=True)
     logging.info(f"{func_name} finished")
     output = process_bash_output(p.stdout)
@@ -41,12 +43,12 @@ def log_and_exec_process(command, func_name):
 
 def todo(context="", flat=False, tidy=False):
     """
-    Print undone tasks based on context.
+    Print the list of the tasks based.
 
     Parameters:
-        context (str): The path of the context the task belongs to. It's a sequence of strings separated by dots where each string indicate the name of a context in the contexts hierarchy.
-        flat (bool): Whether to list subcontexts below tasks (False) or integrate tasks of subcontexts with general tasks (True). Defaults to False.
-        tidy (bool): Alternative way to specify whether to list subcontexts below tasks (False) or integrate tasks of subcontexts with general tasks (True). Defaults to False.
+        context (str, optional): The path of the context the task belongs to. It's a sequence of strings separated by dots where each string indicate the name of a context in the contexts hierarchy.
+        flat (bool, optional): Whether to list subcontexts below tasks (False) or integrate tasks of subcontexts with general tasks (True). Defaults to False.
+        tidy (bool, optional): Alternative way to specify whether to list subcontexts below tasks (False) or integrate tasks of subcontexts with general tasks (True). Defaults to False.
 
     Returns:
         None
@@ -57,7 +59,10 @@ def todo(context="", flat=False, tidy=False):
     if flat or tidy:
         command += " --flat" if flat else "--tidy"
 
-    return log_and_exec_process(command, "todo")
+    result = log_and_exec_process(command, "todo")
+    print(result)
+
+    return result
 
 
 def todo_add(
@@ -394,7 +399,14 @@ functions_dict = {
 def parse_llm_output(text):
     global functions_dict
     execution_queue = []
+
     processed = text.split("<JSON>")[1].split("<JSON/>")[0].strip()
+
+    # correct some common mistakes in json formatting
+    # Replace 'True' with 'true' and 'False' with 'false'
+    processed = re.sub(r"\bTrue\b", "true", processed)
+    processed = re.sub(r"\bFalse\b", "false", processed)
+
     processed = json.loads(processed)
     for f in processed:
         func = (
