@@ -1,48 +1,3 @@
-# ### TODO
-# - implement scenarios. first run them by hand. start from simple single step and continue with more complex:
-#     - adding task (1 step)
-#         - "can you add task a and b to my homework list?" ✅
-#     - listing tasks (1 step)
-#         - "can you list my items in games wish list?" ✅
-#     - moving tasks to new context (1 step)
-#         - "can you move the items in study context to hardwork context?" 🔄
-#     - modifying task attributes (2 step)
-#         - "can you change the name of elden ring to elden lord?"
-#     - removing context (1 step)
-#         - "can you remove my study list?"
-#     - removing task (2 steps) ✅
-#         - 'can you remove "bananas" and "rust" from my items?'
-#         - NOTE: not mentioning names in "" leads to error.
-#
-#     - merging contexts (2 steps)
-#         - "can you merge best games context and games wish list context?"
-#     - adding deadline, start, period or any sort of time (2 step)
-#         - "can you add a deadline for my study list for tomorrow?"
-#     - mark task as done (2 steps)
-#         - "can you mark elden ring from my games wish list as done?"
-# - find a task by name ✅
-# - json won't parse if a character is extra or missing. make it robust.
-# - more robust way to map llm func params to actual func params based on their name. use string diff. ✅
-# - read some blog posts about the same software solutions
-# - enhance prompt:
-#     - tune tempereture. Start with 0 temperature
-# - Frontend: use streamlit
-
-# ### Helper functions
-
-# ### Notes:
-# - spell checking. may need to first find the correct task title and id.
-# - may be good to store the last n characters of the conversation and input it as context to the model.
-# - best way for remote function calling in python
-# - model may perform repetitive operations. when asked to merge, it added some tasks first which is wrong.
-# - can pass history in each request to enrich the propmt.
-# - can pass the output of todo --flat in each request to enrich the promp.
-# - can let the model hallucinate to see other scenarios and test cases and the model's response
-# - can specify the steps the model needs to take to respond for each specific query and command
-
-# ### Questions:
-# - design a feedback loop. how the model is meant to know the meaning of errors?
-
 import json
 import subprocess
 import shutil
@@ -353,18 +308,18 @@ def todo_ctx(
     log_and_exec_process(command, "todo_ctx")
 
 
-def todo_mv(ctx1, ctx2):
+def todo_mv(source_ctx, destination_ctx):
     """
-    Move all tasks and subcontexts from one context to another.
+    Move all tasks and subcontexts from source context to destination context.
 
     Parameters:
-        ctx1 (str): Source context.
-        ctx2 (str): Destination context.
+        source_ctx (str): Source context.
+        destination_ctx (str): Destination context.
 
     Returns:
         None
     """
-    command = f"todo mv '{ctx1}' '{ctx2}'"
+    command = f"todo mv '{source_ctx}' '{destination_ctx}'"
 
     log_and_exec_process(command, "todo_mv")
 
@@ -525,7 +480,7 @@ if __name__ == "__main__":
         logger.info(f"removed {todo_loc}")
 
     inputs = []
-    logging.info("**********\nSession Start.")
+    logging.info("\n**********\nSession Start.")
     print(
         """Prompt (
         start operation: gg,
@@ -542,7 +497,7 @@ if __name__ == "__main__":
             if not USER_PROMPT:
                 print.info("Empty prompt. exiting...")
                 break
-            logging.info(f"user prompt: {USER_PROMPT}")
+            logging.info(f"\nuser prompt: {USER_PROMPT}")
             FULL_PROMPT = BASE_PROMPT + f"\nUSER: {USER_PROMPT}\n"
             print("Communicating with LLM...")
             response = llama_generate(FULL_PROMPT, AWS_API_KEY)

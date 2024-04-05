@@ -127,11 +127,11 @@ def todo_ctx(
 ---
 def todo_mv(ctx1, ctx2):
     
-    Move all tasks and subcontexts from one context to another.
+    Move all tasks and subcontexts from source context to destination context.
 
     Parameters:
-        ctx1 (str): Source context.
-        ctx2 (str): Destination context.
+        source_ctx (str): Source context.
+        destination_ctx (str): Destination context.
 
 ---
 def todo_rmctx(context, force=False):
