@@ -246,6 +246,9 @@ def todo_rm(ids):
         None
     """
     ids_int = []
+    # Convert a single string into a list with lenght one.
+    if type(ids) == str:
+        ids = [ids]
     for task_name in ids:
         task_id = get_task_id(task_name)
         if task_id:
@@ -453,8 +456,11 @@ def llama_generate(prompt, api_token, max_gen_len=320, temperature=0.2, top_p=0.
     with open("./aws_api_quota_remaining", "w") as f:
         f.write(str(aws_api_quota_remaining))
     logging.info(f"ramining AWS API calls: {aws_api_quota_remaining}")
-
-    return json.loads(res.text)["body"]["generation"]
+    result = json.loads(res.text)["body"]["generation"]
+    logging.info(
+        f"**********\nRaw LLM response:\n{result}\n**********",
+    )
+    return result
 
 
 def string_matcher(list_a, list_b):
@@ -517,10 +523,6 @@ if __name__ == "__main__":
             FULL_PROMPT = BASE_PROMPT + f"\nUSER: {USER_PROMPT}\n"
             print("Communicating with LLM...")
             response = llama_generate(FULL_PROMPT, AWS_API_KEY)
-            logging.info(
-                f"**********\nRaw LLM response:\n{response}\n**********",
-            )
-
             execution_process(parse_llm_output(response))
             inputs = []
             print("Operation finished. Waiting for the next request...")
