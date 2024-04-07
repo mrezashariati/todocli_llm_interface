@@ -1,4 +1,6 @@
 TODO:
+- write tests for the following scenarios 🔄
+- prepare a timetable, demonstrating timing of different phases, like API implementation, RAG, documentation.
 - implement scenarios. first run them by hand. start from simple single step and continue with more complex:
      - adding task (1 step)
          - "can you add task a and b to my homework list?" ✅

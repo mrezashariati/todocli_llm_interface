@@ -8,7 +8,7 @@ The todocli API and it's documentation is as follows:
 ---- start of documentation ----
 def todo(context="", flat=False, tidy=False):
 
-    Print undone tasks based on context.
+    Print undone tasks based on context and formatted flat or tidy. If no context is provided, prints all the contexts or tasks based on formatting mode.
 
     Parameters:
         context (str): The path of the context the task belongs to. It's a sequence of strings separated by dots where each string indicate the name of a context in the contexts hierarchy.
@@ -29,7 +29,7 @@ def todo_add(
     Add a task with the specified options.
 
     Parameters:
-        title (str): The title of the task.
+        title (str, required): The title of the task.
         deadline (str): Deadline for the task. MOMENT can be a specific moment in time, in the following format: YYYY-MM-DD, YYYY-MM-DD HH:MM:SS, YYYY-MM-DDTHH:MM:SS. It can also be a delay, such as 2w which means "2 weeks from now". Other accepted characters are s, m, h, d, w, which respectively correspond to seconds, minutes, hours, days and weeks. An integer must preeced the letter. Defaults to None.
         start (str): Time at which the task starts. MOMENT can be a specific moment in time, in the following format: YYYY-MM-DD, YYYY-MM-DD HH:MM:SS, YYYY-MM-DDTHH:MM:SS. It can also be a delay, such as 2w which means "2 weeks from now". Other accepted characters are s, m, h, d, w, which respectively correspond to seconds, minutes, hours, days and weeks. An integer must preeced the letter. Defaults to None.
         context (str): The path of the context the task belongs to. It's a sequence of strings separated by dots where each string indicate the name of a context in the contexts hierarchy. Defaults to None.
@@ -43,7 +43,7 @@ def todo_done(ids):
     Set tasks identified by IDs as done.
 
     Parameters:
-        ids (list of str): List of task IDs to mark as done.
+        ids (list of str, required): List of task IDs to mark as done.
 ---
 def todo_task(
     id,
@@ -60,7 +60,7 @@ def todo_task(
     Edit the specified task with the given options.
 
     Parameters:
-        id (str): ID of the task to edit.
+        id (str, required): ID of the task to edit.
         deadline (str): New deadline for the task. Defaults to None.
         start (str): New start time for the task. Defaults to None.
         context (str): The New path of the context the task belongs to. Defaults to None.
@@ -81,7 +81,7 @@ def todo_search(
     Search for tasks whose title contains the substring <term> based on the specified criteria.
 
     Parameters:
-        term (str): Search term.
+        term (str, required): Search term.
         context (str): Context for the search. Defaults to None.
         done (bool): Whether to search for done tasks. Defaults to True.
         undone (bool): Whether to search for undone tasks. Defaults to False.
@@ -94,9 +94,9 @@ def todo_rm(ids):
     Remove tasks identified by the specified IDs.
 
     Parameters:
-        ids (list of str): List of task IDs to remove.
+        ids (list of str, required): List of task IDs to remove.
 ---
-def todo_ping(ids):
+def todo_ping(ids, required):
     
     Increment the ping counter of the given tasks. The ping counter is the second-to-last criterion used to rank tasks, having precedence over the added date. By default, tasks have a ping of 0, and whenever you use the ping command on a task, its ping counter is increased by one. The idea is that whenever you are reminded of the need of a pending task, you "ping" it, organically increasing its importance in comparison to other tasks.
 
@@ -118,7 +118,7 @@ def todo_ctx(
     Manipulate contexts.
 
     Parameters:
-        context (str): The context to manipulate.
+        context (str, required): The context to manipulate.
         flat (bool): Whether to list subcontexts below tasks (False) or integrate tasks of subcontexts with general tasks (True). Defaults to False.
         tidy (bool): Alternative way to specify whether to list subcontexts below tasks (False) or integrate tasks of subcontexts with general tasks (True). Defaults to False.
         priority (int): New priority for the context. Defaults to None.
@@ -130,8 +130,8 @@ def todo_mv(ctx1, ctx2):
     Move all tasks and subcontexts from source context to destination context.
 
     Parameters:
-        source_ctx (str): Source context.
-        destination_ctx (str): Destination context.
+        source_ctx (str, required): Source context.
+        destination_ctx (str, required): Destination context.
 
 ---
 def todo_rmctx(context, force=False):
@@ -139,7 +139,7 @@ def todo_rmctx(context, force=False):
     Remove a context and its contents recursively.
 
     Parameters:
-        context (str): The context to be removed.
+        context (str, required): The context to be removed.
         force (bool): Whether to force removal without confirmation. Defaults to False.
 ---
 def todo_future():

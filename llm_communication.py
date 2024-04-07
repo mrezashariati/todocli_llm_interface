@@ -20,6 +20,16 @@ logging.basicConfig(
 
 logger = logging.getLogger(__name__)
 
+# Reading config variables
+with open("./aws_api_quota_remaining", "r") as f:
+    aws_api_quota_remaining = int(f.readlines()[0].strip())
+
+with open("./aws_api.key", "r") as f:
+    AWS_API_KEY = f.readlines()[0].strip()
+
+with open("./base_prompt.txt", "r") as f:
+    BASE_PROMPT = f.read()
+
 
 def process_bash_output(o):
     pattern = r"\x1b\[\d*m"
@@ -29,7 +39,6 @@ def process_bash_output(o):
 
 def log_and_exec_process(command, func_name):
     logging.info(f"running command: {command}")
-    print(f"running command: {command}")
 
     p = subprocess.run(["bash", "-c", command], capture_output=True, text=True)
     logging.info(f"{func_name} finished")
@@ -43,7 +52,7 @@ def log_and_exec_process(command, func_name):
 
 def todo(context="", flat=False, tidy=False):
     """
-    Print the list of the tasks based.
+    Print the list of the tasks based on the context and formatted flat or tidy.
 
     Parameters:
         context (str, optional): The path of the context the task belongs to. It's a sequence of strings separated by dots where each string indicate the name of a context in the contexts hierarchy.
@@ -60,7 +69,6 @@ def todo(context="", flat=False, tidy=False):
         command += " --flat" if flat else "--tidy"
 
     result = log_and_exec_process(command, "todo")
-    print(result)
 
     return result
 
@@ -460,6 +468,7 @@ def string_matcher(list_a, list_b):
 
 
 def get_task_id(task_name):
+    # Fetch the ID of the corresponding task_name
     task_list = list(
         filter(lambda x: x, process_bash_output(todo(flat=True)).split("\n"))
     )
@@ -471,25 +480,20 @@ def get_task_id(task_name):
         logging.info(f"no tasks found including {task_name}!")
         return False
     else:
-        return int(ids[0].split("|")[0])
+        return ids[0].split("|")[0].strip()
+
+
+def reset_todocli():
+    todo_loc = todo_location().strip()
+    if Path.exists(Path(todo_loc)):
+        shutil.rmtree(todo_loc)
+        logger.info(f"removed {todo_loc}")
 
 
 if __name__ == "__main__":
-    # Reading config variables
-    with open("./aws_api_quota_remaining", "r") as f:
-        aws_api_quota_remaining = int(f.readlines()[0].strip())
-
-    with open("./aws_api.key", "r") as f:
-        AWS_API_KEY = f.readlines()[0].strip()
-
-    with open("./base_prompt.txt", "r") as f:
-        BASE_PROMPT = f.read()
-
     cleanup = False
-    todo_loc = todo_location().strip()
-    if cleanup and Path.exists(Path(todo_loc)):
-        shutil.rmtree(todo_loc)
-        logger.info(f"removed {todo_loc}")
+    if cleanup:
+        reset_todocli()
 
     inputs = []
     logging.info("\n**********\nSession Start.")
