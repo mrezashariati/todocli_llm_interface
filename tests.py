@@ -3,10 +3,12 @@ from unittest.mock import patch, call
 import llm_communication
 from llm_communication import (
     todo_add,
+    todo,
     reset_todocli,
     llama_generate,
     execution_process,
     parse_llm_output,
+    process_bash_output,
 )
 
 # Reading config variables
@@ -41,12 +43,15 @@ class TestLLMCommunication(unittest.TestCase):
             "llm_communication.log_and_exec_process",
             wraps=llm_communication.log_and_exec_process,
         ) as mock_log_and_exec_process:
-            USER_PROMPT = """can you remove "elden ring" from my items?"""
+            USER_PROMPT = f"""
+here is the list of my current tasks:
+ID | TaskName ★Priority, Context
+{process_bash_output(todo(flat=True)).replace("#", ",")}
+instruction: can you remove "elden ring" from my items?"""
             FULL_PROMPT = BASE_PROMPT + f"\nUSER: {USER_PROMPT}\n"
             response = llama_generate(FULL_PROMPT, AWS_API_KEY)
             execution_process(parse_llm_output(response))
             # Assertion
-            print(mock_log_and_exec_process.mock_calls)
             mock_log_and_exec_process.assert_any_call("todo rm 1", "todo_rm")
 
     def test_todo_rm_mult_tasks(self):
@@ -55,7 +60,11 @@ class TestLLMCommunication(unittest.TestCase):
             "llm_communication.log_and_exec_process",
             wraps=llm_communication.log_and_exec_process,
         ) as mock_log_and_exec_process:
-            USER_PROMPT = """can you remove "bananas" and "rust" from my items?"""
+            USER_PROMPT = f"""
+here is the list of my current tasks:
+ID | TaskName ★Priority, Context
+{process_bash_output(todo(flat=True)).replace("#", ",")}
+instruction: can you remove "bananas" and "rust" from my items?"""
             FULL_PROMPT = BASE_PROMPT + f"\nUSER: {USER_PROMPT}\n"
             response = llama_generate(FULL_PROMPT, AWS_API_KEY)
             execution_process(parse_llm_output(response))
@@ -72,7 +81,11 @@ class TestLLMCommunication(unittest.TestCase):
             "llm_communication.log_and_exec_process",
             wraps=llm_communication.log_and_exec_process,
         ) as mock_log_and_exec_process:
-            USER_PROMPT = """can you add task a and b to my homework list?"""
+            USER_PROMPT = f"""
+here is the list of my current tasks:
+ID | TaskName ★Priority, Context
+{process_bash_output(todo(flat=True)).replace("#", ",")}
+instruction: can you add task a and b to my homework list?"""
             FULL_PROMPT = BASE_PROMPT + f"\nUSER: {USER_PROMPT}\n"
             response = llama_generate(FULL_PROMPT, AWS_API_KEY)
             execution_process(parse_llm_output(response))
@@ -97,7 +110,11 @@ class TestLLMCommunication(unittest.TestCase):
             "llm_communication.log_and_exec_process",
             wraps=llm_communication.log_and_exec_process,
         ) as mock_log_and_exec_process:
-            USER_PROMPT = """can you list my items in games list?"""
+            USER_PROMPT = f"""
+here is the list of my current tasks:
+ID | TaskName ★Priority, Context
+{process_bash_output(todo(flat=True)).replace("#", ",")}
+instruction: can you list my items in games list?"""
             FULL_PROMPT = BASE_PROMPT + f"\nUSER: {USER_PROMPT}\n"
             response = llama_generate(FULL_PROMPT, AWS_API_KEY)
             execution_process(parse_llm_output(response))
@@ -110,15 +127,36 @@ class TestLLMCommunication(unittest.TestCase):
             "llm_communication.log_and_exec_process",
             wraps=llm_communication.log_and_exec_process,
         ) as mock_log_and_exec_process:
-            USER_PROMPT = (
-                """"can you move the items in study context to homework context?"""
-            )
+            USER_PROMPT = f"""
+here is the list of my current tasks:
+ID | TaskName ★Priority, Context
+{process_bash_output(todo(flat=True)).replace("#", ",")}
+instruction: can you move the items in study context to homework context?"""
             FULL_PROMPT = BASE_PROMPT + f"\nUSER: {USER_PROMPT}\n"
             response = llama_generate(FULL_PROMPT, AWS_API_KEY)
             execution_process(parse_llm_output(response))
             # Assertion
             mock_log_and_exec_process.assert_any_call(
                 """todo mv 'study' 'homework'""", "todo_mv"
+            )
+
+    def test_todo_task_rename_single_task(self):
+        self.setup_testing_env()
+        with patch(
+            "llm_communication.log_and_exec_process",
+            wraps=llm_communication.log_and_exec_process,
+        ) as mock_log_and_exec_process:
+            USER_PROMPT = f"""
+here is the list of my current tasks:
+ID | TaskName ★Priority, Context
+{process_bash_output(todo(flat=True)).replace("#", ",")}
+instruction: can you change the name of "elden ring" to "elden lord"? """
+            FULL_PROMPT = BASE_PROMPT + f"\nUSER: {USER_PROMPT}\n"
+            response = llama_generate(FULL_PROMPT, AWS_API_KEY)
+            execution_process(parse_llm_output(response))
+            # Assertion
+            mock_log_and_exec_process.assert_any_call(
+                """todo task 1 --title \"Elden Lord\"""", "todo_task"
             )
 
 

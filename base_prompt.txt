@@ -57,7 +57,7 @@ def todo_task(
     front=None,
 ):
     
-    Edit the specified task with the given options.
+    Edit the specified task with the given options. You can use this funciton for renaming the tasks.
 
     Parameters:
         id (str, required): ID of the task to edit.
@@ -195,7 +195,23 @@ your response should look like this:
 -------------
 
 USER:
-I want to add 2 tasks. task a and b.
+here is the list of my current tasks:
+ID | TaskName ★Priority ,Context
+1 | Elden Ring ★5 ,games
+7 | cleaning ★5 ,home
+5 | Write Test ★4 ,work
+9 | Read AD last lecture ★4 ,homework
+4 | Planning ★3 ,work
+8 | water the pots ★3 ,home
+3 | Study Math ★2 ,homework
+6 | Write Diary ★2 ,personal
+2 | Rust ,games_wishlist
+a | play dota 2 ,hobby
+b | bananas ,shppinglist
+c | apples ,shppinglist
+d | Deutsch Schreiben ,homework
+
+instruction: I want to add 2 tasks. task a and b.
 
 <COT>
 1- operations needed: 

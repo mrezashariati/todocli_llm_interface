@@ -245,6 +245,7 @@ def todo_rm(ids):
     Returns:
         None
     """
+
     ids_int = []
     # Convert a single string into a list with lenght one.
     if type(ids) == str:
@@ -475,18 +476,28 @@ def string_matcher(list_a, list_b):
 
 def get_task_id(task_name):
     # Fetch the ID of the corresponding task_name
+    ## if task_name is identical to an ID, it is treated as an ID, else I'll search the task names for it.
     task_list = list(
         filter(lambda x: x, process_bash_output(todo(flat=True)).split("\n"))
     )
-    ids = [task for task in task_list if task_name.lower() in task.lower()]
-    if len(ids) > 1:
+    task_list = [
+        ((e.split("|")[0]).strip(), (e.split("|")[1]).strip()) for e in task_list
+    ]
+
+    ids, names = zip(*task_list)
+
+    if task_name in ids:
+        return task_name
+
+    found_names = [task for task in names if task_name.lower() in task.lower()]
+    if len(found_names) > 1:
         logging.info("multiple tasks found!")
         return False
-    elif len(ids) == 0:
+    elif len(found_names) == 0:
         logging.info(f"no tasks found including {task_name}!")
         return False
     else:
-        return ids[0].split("|")[0].strip()
+        return ids[names.index(found_names[0])].strip()
 
 
 def reset_todocli():
@@ -515,7 +526,13 @@ if __name__ == "__main__":
             break
         if "gg" in inputs[-1].lower():
             inputs[-1] = inputs[-1].split("gg")[0]
-            USER_PROMPT = "\n".join(inputs)
+            USER_PROMPT = f"""
+here is the list of my current tasks:
+ID | TaskName ★Priority, Context
+{process_bash_output(todo(flat=True)).replace("#", ",")}
+instruction: """ + "\n".join(
+                inputs
+            )
             if not USER_PROMPT:
                 print.info("Empty prompt. exiting...")
                 break
