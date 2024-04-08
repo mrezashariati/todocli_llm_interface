@@ -57,7 +57,15 @@ def todo_task(
     front=None,
 ):
     
-    Edit the specified task with the given options. You can use this funciton for renaming the tasks.
+    Edit the specified task with the given options. You can use this funciton for:
+    * renaming the tasks
+    * changing the deadline of the task
+    * changing the start of the task
+    * changing the context of the task
+    * changing the priority of the task
+    * changing the dependencies of the task
+    * changing the period and recurrence of the task
+    * changing whether the task should always appear on the main todo listing or not.
 
     Parameters:
         id (str, required): ID of the task to edit.
@@ -196,7 +204,7 @@ your response should look like this:
 
 USER:
 here is the list of my current tasks:
-ID | TaskName ★Priority ,Context
+ID | TaskName ⌛ Deadline ★Priority ,Context
 1 | Elden Ring ★5 ,games
 7 | cleaning ★5 ,home
 5 | Write Test ★4 ,work

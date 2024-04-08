@@ -79,14 +79,3 @@ Corrected JSON:
 
 CASE 4
 Incorrect JSON:
-
-[
-    {
-        "function": "todo",
-        "parameters": {
-            "context": "",
-            "flat": False,
-        },
-        "log": "Listing all tasks in 'flat' mode."
-    }
-]

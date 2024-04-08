@@ -101,9 +101,9 @@ def todo_add(
     """
     command = f"""todo add \"{title}\""""
     if deadline:
-        command += f" --deadline {deadline}"
+        command += f""" --deadline \"{deadline}\""""
     if start:
-        command += f" --start {start}"
+        command += f""" --start \"{start}\""""
     if context:
         command += f""" --context \"{context}\""""
     if priority:
@@ -163,11 +163,15 @@ def todo_task(
     Returns:
         None
     """
+    id = get_task_id(id)
+    if not id:
+        return
+
     command = f"todo task {id}"
     if deadline:
-        command += f" --deadline {deadline}"
+        command += f""" --deadline \"{deadline}\""""
     if start:
-        command += f" --start {start}"
+        command += f""" --start \"{start}\""""
     if context:
         command += f""" --context \"{context}\""""
     if priority:
@@ -419,6 +423,9 @@ def parse_llm_output(text):
     processed = re.sub(r"\bTrue\b", "true", processed)
     processed = re.sub(r"\bFalse\b", "false", processed)
 
+    # changes the formatting of datetime to the specified format
+    processed = standardize_date_format(processed)
+
     processed = json.loads(processed)
     for f in processed:
         func = (
@@ -507,6 +514,41 @@ def reset_todocli():
         logger.info(f"removed {todo_loc}")
 
 
+def standardize_date_format(text):
+    # Define a regex pattern to match dates in MM/DD/YYYY, DD-MM-YYYY, YYYY/MM/DD formats, etc.
+    # This pattern also matches optional time in HH:MM:SS format after the date.
+    date_pattern = re.compile(
+        r"(?P<year>\d{4})[/-](?P<month>\d{1,2})[/-](?P<day>\d{1,2})|"  # Matches YYYY-MM-DD and variants
+        r"(?P<month2>\d{1,2})[/-](?P<day2>\d{1,2})[/-](?P<year2>\d{4})|"  # Matches MM/DD/YYYY and variants
+        r"(?P<day3>\d{1,2})[/-](?P<month3>\d{1,2})[/-](?P<year3>\d{4})"  # Matches DD-MM-YYYY and variants
+        r"(?:\s+(?P<hours>\d{1,2}):(?P<minutes>\d{2}):(?P<seconds>\d{2}))?",  # Optional time
+        re.VERBOSE,
+    )
+
+    def replace_with_standard_format(match):
+        # Extract date components from the match object
+        year = match.group("year") or match.group("year2") or match.group("year3")
+        month = match.group("month") or match.group("month2") or match.group("month3")
+        day = match.group("day") or match.group("day2") or match.group("day3")
+        hours = match.group("hours")
+        minutes = match.group("minutes")
+        seconds = match.group("seconds")
+
+        # Format month and day to ensure two digits
+        month = f"{int(month):02d}"
+        day = f"{int(day):02d}"
+
+        # Construct the standard date format
+        standard_date = f"{year}-{month}-{day}"
+        if hours and minutes and seconds:
+            return f"{standard_date} {hours}:{minutes}:{seconds}"
+        else:
+            return standard_date
+
+    # Replace all found dates with the standard format
+    return date_pattern.sub(replace_with_standard_format, text)
+
+
 if __name__ == "__main__":
     cleanup = False
     if cleanup:
@@ -528,7 +570,7 @@ if __name__ == "__main__":
             inputs[-1] = inputs[-1].split("gg")[0]
             USER_PROMPT = f"""
 here is the list of my current tasks:
-ID | TaskName ★Priority, Context
+ID | TaskName ⌛ Deadline ★Priority ,Context
 {process_bash_output(todo(flat=True)).replace("#", ",")}
 instruction: """ + "\n".join(
                 inputs
