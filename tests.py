@@ -10,6 +10,8 @@ from llm_communication import (
     parse_llm_output,
     process_bash_output,
 )
+from itertools import permutations
+from functools import reduce
 
 # Reading config variables
 with open("./aws_api.key", "r") as f:
@@ -70,7 +72,8 @@ instruction: can you remove "bananas" and "rust" from my items?"""
             execution_process(parse_llm_output(response))
             # Assertion
             assert (
-                call("todo rm 2 b", "todo_rm") in mock_log_and_exec_process.mock_calls
+                call("todo rm 2 b", "todo_rm")
+                in mock_log_and_exec_process.mock_calls
                 or call("todo rm b 2", "todo_rm")
                 in mock_log_and_exec_process.mock_calls
             )
@@ -246,6 +249,25 @@ instruction: can you set the deadline of study math to September 10 2025?"""
             )
 
     def test_todo_task_set_start_single_task(self):
+            self.setup_testing_env()
+            with patch(
+                "llm_communication.log_and_exec_process",
+                wraps=llm_communication.log_and_exec_process,
+            ) as mock_log_and_exec_process:
+                USER_PROMPT = f"""
+    here is the list of my current tasks:
+    ID | TaskName ⌛ Deadline ★Priority ,Context
+    {process_bash_output(todo(flat=True)).replace("#", ",")}
+    instruction: can you set the start of planning to 2024/10/11 12:34:22?"""
+                FULL_PROMPT = BASE_PROMPT + f"\nUSER: {USER_PROMPT}\n"
+                response = llama_generate(FULL_PROMPT, AWS_API_KEY)
+                execution_process(parse_llm_output(response))
+                # Assertion
+                mock_log_and_exec_process.assert_any_call(
+                    """todo task 4 --start \"2024-10-11 12:34:22\"""", "todo_task"
+                )
+
+    def test_todo_done_mult_task(self):
         self.setup_testing_env()
         with patch(
             "llm_communication.log_and_exec_process",
@@ -255,14 +277,19 @@ instruction: can you set the deadline of study math to September 10 2025?"""
 here is the list of my current tasks:
 ID | TaskName ⌛ Deadline ★Priority ,Context
 {process_bash_output(todo(flat=True)).replace("#", ",")}
-instruction: can you set the start of planning to 2024/10/11 12:34:22?"""
+instruction: can you mark elden ring, writing test and water the pots as done?"""
             FULL_PROMPT = BASE_PROMPT + f"\nUSER: {USER_PROMPT}\n"
             response = llama_generate(FULL_PROMPT, AWS_API_KEY)
             execution_process(parse_llm_output(response))
             # Assertion
-            mock_log_and_exec_process.assert_any_call(
-                """todo task 4 --start \"2024-10-11 12:34:22\"""", "todo_task"
-            )
+            ids = [1, 5, 8]
+            perms = [" ".join([str(j) for j in i]) for i in list(permutations(ids))]
+            perms = [f"todo done {i}" for i in perms]
+            perms_exist = [
+                call(i, "todo_done") in mock_log_and_exec_process.mock_calls
+                for i in perms
+            ]
+            assert reduce(lambda a, b: a or b, perms_exist)
 
 
 if __name__ == "__main__":

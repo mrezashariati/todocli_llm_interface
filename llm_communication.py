@@ -130,9 +130,19 @@ def todo_done(ids):
     Returns:
         None
     """
-    command = f"todo done {' '.join(ids)}"
 
-    log_and_exec_process(command, "todo_done")
+    ids_int = []
+    # Convert a single string into a list with lenght one.
+    if type(ids) == str:
+        ids = [ids]
+    for task_name in ids:
+        task_id = get_task_id(task_name)
+        if task_id:
+            ids_int.append(str(task_id))
+    if ids_int:
+        command = f"todo done {' '.join(ids_int)}"
+
+        log_and_exec_process(command, "todo_done")
 
 
 def todo_task(
@@ -466,7 +476,7 @@ def llama_generate(prompt, api_token, max_gen_len=320, temperature=0.2, top_p=0.
     logging.info(f"ramining AWS API calls: {aws_api_quota_remaining}")
     result = json.loads(res.text)["body"]["generation"]
     logging.info(
-        f"**********\nRaw LLM response:\n{result}\n**********",
+        f"Raw LLM response:\n----------\n{result}\n----------",
     )
     return result
 
@@ -484,6 +494,8 @@ def string_matcher(list_a, list_b):
 def get_task_id(task_name):
     # Fetch the ID of the corresponding task_name
     ## if task_name is identical to an ID, it is treated as an ID, else I'll search the task names for it.
+    task_name = str(task_name)
+
     task_list = list(
         filter(lambda x: x, process_bash_output(todo(flat=True)).split("\n"))
     )
@@ -555,7 +567,7 @@ if __name__ == "__main__":
         reset_todocli()
 
     inputs = []
-    logging.info("\n**********\nSession Start.")
+    logging.info("\n----------\nSession Start.")
     print(
         """Prompt (
         start operation: gg,
@@ -567,6 +579,7 @@ if __name__ == "__main__":
         if "exit" in inputs[-1].lower():
             break
         if "gg" in inputs[-1].lower():
+            logging.info("-----Request Start-----")
             inputs[-1] = inputs[-1].split("gg")[0]
             USER_PROMPT = f"""
 here is the list of my current tasks:
@@ -578,12 +591,13 @@ instruction: """ + "\n".join(
             if not USER_PROMPT:
                 print.info("Empty prompt. exiting...")
                 break
-            logging.info(f"\nuser prompt: {USER_PROMPT}")
+            logging.info(f"\nuser prompt:\n-----{USER_PROMPT}\n-----")
             FULL_PROMPT = BASE_PROMPT + f"\nUSER: {USER_PROMPT}\n"
             print("Communicating with LLM...")
             response = llama_generate(FULL_PROMPT, AWS_API_KEY)
             execution_process(parse_llm_output(response))
             inputs = []
             print("Operation finished. Waiting for the next request...")
+            logging.info("-----Request End-----")
 
-    logging.info("Session End\n**********")
+    logging.info("Session End\n----------")
