@@ -83,16 +83,15 @@ def todo_history():
     Print the list of all tasks sorted by creation date, along with their properties.
 ---
 def todo_search(
-    term, context=None, done=True, undone=False, before=None, after=None, case=False
+    term, is_done, context=None, before=None, after=None, case=False
 ):
     
     Search for tasks whose title contains the substring <term> based on the specified criteria.
 
     Parameters:
         term (str, required): Search term.
+        is_done (bool, required): Whether to search for done or undone tasks. If searching for undone tasks, set it to False. If searching for done tasks, set it to True.
         context (str): Context for the search. Defaults to None.
-        done (bool): Whether to search for done tasks. Defaults to True.
-        undone (bool): Whether to search for undone tasks. Defaults to False.
         before (str): Limit search to tasks created before this moment. MOMENT can be a specific moment in time, in the following format: YYYY-MM-DD, YYYY-MM-DD HH:MM:SS, YYYY-MM-DDTHH:MM:SS. It can also be a delay, such as 2w which means "2 weeks from now". Other accepted characters are s, m, h, d, w, which respectively correspond to seconds, minutes, hours, days and weeks. An integer must preeced the letter. Defaults to None.
         after (str): Limit search to tasks created after this moment. MOMENT can be a specific moment in time, in the following format: YYYY-MM-DD, YYYY-MM-DD HH:MM:SS, YYYY-MM-DDTHH:MM:SS. It can also be a delay, such as 2w which means "2 weeks from now". Other accepted characters are s, m, h, d, w, which respectively correspond to seconds, minutes, hours, days and weeks. An integer must preeced the letter. Defaults to None.
         case (bool): Whether the search is case sensitive. Defaults to False.
@@ -167,7 +166,7 @@ def todo_location():
         None
 ---- end of documentation ----
 
-Only write these function calls in json format. The fields include:
+Only write these function calls in JSON format. The fields include:
     * the function name to call,
     * the function parameters,
     * a log message expressing briefly your reasoning and steps which led you to that particular function call.
@@ -178,6 +177,8 @@ Only use functions sent to you in todocli API documentation and nothing else.
 
 Exactly use the function parameters' names as they are written in the API documentation.
 
+Make sure that your JSON response also includes all (required) parameters you found in you <COT> target functions parameters section.
+
 Only carry out the task user has requested. Nothing more.
 
 your response should look like this:
@@ -187,7 +188,7 @@ your response should look like this:
 ...
 <COT/>
 
-* Generating a json exactly structured like:
+* Generating a JSON exactly structured like:
 <JSON>
 [
     {
@@ -243,16 +244,14 @@ instruction: I want to add 2 tasks. task a and b.
     {
         "function": "todo_add",
         "parameters": {
-            "title": "task a",
-            "context": ""
+            "title": "task a"
         },
         "log": "Adding task 'task a'."
     },
     {
         "function": "todo_add",
         "parameters": {
-            "title": "task b",
-            "context": ""
+            "title": "task b"
         },
         "log": "Adding task 'task b'."
     }

@@ -212,17 +212,14 @@ def todo_history():
     return log_and_exec_process(command, "todo_history")
 
 
-def todo_search(
-    term, context=None, done=True, undone=False, before=None, after=None, case=False
-):
+def todo_search(term, is_done=True, context=None, before=None, after=None, case=False):
     """
     Search for tasks whose title contains the substring <term> based on the specified criteria.
 
     Parameters:
         term (str): Search term.
         context (str): Context for the search. Defaults to None.
-        done (bool): Whether to search for done tasks. Defaults to True.
-        undone (bool): Whether to search for undone tasks. Defaults to False.
+        is_done (bool): Whether to search for done tasks. Defaults to True.
         before (str): Limit search to tasks created before this moment. MOMENT can be a specific moment in time, in the following format: YYYY-MM-DD, YYYY-MM-DD HH:MM:SS, YYYY-MM-DDTHH:MM:SS. It can also be a delay, such as 2w which means "2 weeks from now". Other accepted characters are s, m, h, d, w, which respectively correspond to seconds, minutes, hours, days and weeks. An integer must preeced the letter. Defaults to None.
         after (str): Limit search to tasks created after this moment. MOMENT can be a specific moment in time, in the following format: YYYY-MM-DD, YYYY-MM-DD HH:MM:SS, YYYY-MM-DDTHH:MM:SS. It can also be a delay, such as 2w which means "2 weeks from now". Other accepted characters are s, m, h, d, w, which respectively correspond to seconds, minutes, hours, days and weeks. An integer must preeced the letter. Defaults to None.
         case (bool): Whether the search is case sensitive. Defaults to False.
@@ -234,9 +231,9 @@ def todo_search(
     command = f"todo search '{term}'"
     if context:
         command += f""" --context \"{context}\""""
-    if done:
+    if is_done:
         command += " --done"
-    elif undone:
+    else:
         command += " --undone"
     if before:
         command += f" --before {before}"
@@ -434,7 +431,6 @@ def parse_llm_output(text):
 
     # changes the formatting of datetime to the specified format
     processed = standardize_date_format(processed)
-
     processed = json.loads(processed)
     for f in processed:
         func = (

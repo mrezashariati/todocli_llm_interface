@@ -314,6 +314,25 @@ instruction: remove my home, work, and shoppinglist contexts please."""
                 any_order=True,
             )
 
+    def test_todo_search(self):
+        self.setup_testing_env()
+        with patch(
+            "llm_communication.log_and_exec_process",
+            wraps=llm_communication.log_and_exec_process,
+        ) as mock_log_and_exec_process:
+            USER_PROMPT = f"""
+here is the list of my current tasks:
+ID | TaskName ⌛ Deadline ★Priority ,Context
+{process_bash_output(todo(flat=True)).replace("#", ",")}
+instruction: I am looking for undone tasks having study in them. can you do that for me please? I neeeeeeeeeed taht really"""
+            FULL_PROMPT = BASE_PROMPT + f"\nUSER: {USER_PROMPT}\n"
+            response = llama_generate(FULL_PROMPT, AWS_API_KEY)
+            execution_process(parse_llm_output(response))
+            # Assertion
+            mock_log_and_exec_process.assert_any_call(
+                "todo search 'study' --undone", "todo_search"
+            )
+
 
 if __name__ == "__main__":
     unittest.main()
