@@ -9,11 +9,14 @@ TODO:
             - NOTE: not mentioning names in "" leads to error.
         - mark task as done (2 steps) ✅
         - removing context (1 step) ✅
-        - merging contexts (2 steps)
-            - can y ou merge best games context and games wish list context?
+        - modifying context attributes
+        - search for tasks
+        - ping tasks
+        - purge tasks
         - adding deadline, start, period or any sort of time (2 step)
             - can you add a deadline for my study list for tomorrow?
-        - test asking multiple independent tasks. like adding some, removing some, editing some...
+    - test asking multiple independent tasks. like adding some, removing some, editing some...
+    - test tasks requiring multiple steps like 'can you remove tasks with "study" in their name?'
     - ask the user before carrying out the operation if there is an operation.
     - read https://github.com/MeetKai/functionary, https://www.reddit.com/r/LocalLLaMA/comments/194z9l6/strategies_for_personal_assistant_function_calling/, https://learn.deeplearning.ai/courses/prompt-engineering-with-llama-2/lesson/1/introduction
     - more robust way to map llm func params to actual func params. use string diff. Some libraries are already doing this ✅🤔

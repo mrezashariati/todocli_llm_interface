@@ -18,8 +18,6 @@ logging.basicConfig(
     ],
 )
 
-logger = logging.getLogger(__name__)
-
 # Reading config variables
 with open("./aws_api_quota_remaining", "r") as f:
     aws_api_quota_remaining = int(f.readlines()[0].strip())
@@ -32,8 +30,9 @@ with open("./base_prompt.txt", "r") as f:
 
 
 def process_bash_output(o):
-    pattern = r"\x1b\[\d*m"
-    o = re.sub(pattern, "", o)
+    # Remove ANSI escape characters
+    ansi_escape_pattern = re.compile(r"\x1B[@-_][0-?]*[ -/]*[@-~]")
+    o = ansi_escape_pattern.sub("", o)
     return o
 
 
@@ -41,11 +40,11 @@ def log_and_exec_process(command, func_name):
     logging.info(f"running command: {command}")
 
     p = subprocess.run(["bash", "-c", command], capture_output=True, text=True)
-    logging.info(f"{func_name} finished")
+    # logging.info(f"{func_name} finished")
     output = process_bash_output(p.stdout)
     if output:
         logging.info(
-            f"command output:\n-----{output}-----",
+            f"command output:\n-----\n{output}\n-----",
         )
         return output
 
@@ -523,7 +522,7 @@ def reset_todocli():
     todo_loc = todo_location().strip()
     if Path.exists(Path(todo_loc)):
         shutil.rmtree(todo_loc)
-        logger.info(f"removed {todo_loc}")
+        logging.info(f"removed {todo_loc}")
 
 
 def standardize_date_format(text):
