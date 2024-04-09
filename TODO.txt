@@ -8,12 +8,12 @@ TODO:
         - removing task (2 steps) ✅
             - NOTE: not mentioning names in "" leads to error.
         - mark task as done (2 steps) ✅
-        - removing context (1 step)
-            - can you remove my study list?
+        - removing context (1 step) ✅
         - merging contexts (2 steps)
             - can y ou merge best games context and games wish list context?
         - adding deadline, start, period or any sort of time (2 step)
             - can you add a deadline for my study list for tomorrow?
+        - test asking multiple independent tasks. like adding some, removing some, editing some...
     - ask the user before carrying out the operation if there is an operation.
     - read https://github.com/MeetKai/functionary, https://www.reddit.com/r/LocalLLaMA/comments/194z9l6/strategies_for_personal_assistant_function_calling/, https://learn.deeplearning.ai/courses/prompt-engineering-with-llama-2/lesson/1/introduction
     - more robust way to map llm func params to actual func params. use string diff. Some libraries are already doing this ✅🤔
@@ -29,6 +29,7 @@ Notes:
  - can let the model hallucinate to see other scenarios and test cases and the model's response
  - can specify the steps the model needs to take to respond for each specific query and command
  - as mentioned in OpenAI's website: Call the model again by appending the function response as a new message, and let the model summarize the results back to the user.
+ - in each func documentation, can write cases where this function is suitable
 
 Questions:
  - design a feedback loop. how the model is meant to know the meaning of errors?

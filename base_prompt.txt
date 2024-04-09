@@ -11,7 +11,7 @@ def todo(context="", flat=False, tidy=False):
     Print undone tasks based on context and formatted flat or tidy. If no context is provided, prints all the contexts or tasks based on formatting mode.
 
     Parameters:
-        context (str): The path of the context the task belongs to. It's a sequence of strings separated by dots where each string indicate the name of a context in the contexts hierarchy.
+        context (str): The path of the context the task belongs to. It's a sequence of strings separated by dots where each string indicate the name of a context in the contexts hierarchy. User my use 'context' and 'list' interchangeably.
         flat (bool): Display in "flat" mode. Whether to list subcontexts below tasks (False) or integrate tasks of subcontexts with general tasks (True). Defaults to False.
         tidy (bool): Display in "tidy" mode. Alternative way to specify whether to list subcontexts below tasks (False) or integrate tasks of subcontexts with general tasks (True). Defaults to False.
 ----        
@@ -142,13 +142,14 @@ def todo_mv(ctx1, ctx2):
         destination_ctx (str, required): Destination context.
 
 ---
-def todo_rmctx(context, force=False):
+def todo_rmctx(context, force=True):
     
-    Remove a context and its contents recursively.
+    Remove a whole context and its contents recursively. This way you do not need to remove tasks one by one. 
+    When aiming to remove a context, this is the right function.
 
     Parameters:
         context (str, required): The context to be removed.
-        force (bool): Whether to force removal without confirmation. Defaults to False.
+        force (bool): Whether to force removal without confirmation. Defaults to True.
 ---
 def todo_future():
 

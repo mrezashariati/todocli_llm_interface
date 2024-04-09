@@ -45,7 +45,7 @@ def log_and_exec_process(command, func_name):
     output = process_bash_output(p.stdout)
     if output:
         logging.info(
-            f"command output:\n{output}",
+            f"command output:\n-----{output}-----",
         )
         return output
 
@@ -355,7 +355,7 @@ def todo_mv(source_ctx, destination_ctx):
     log_and_exec_process(command, "todo_mv")
 
 
-def todo_rmctx(context, force=False):
+def todo_rmctx(context, force=True):
     """
     Remove a context and its contents recursively.
 
