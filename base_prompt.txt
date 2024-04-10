@@ -38,7 +38,7 @@ def todo_add(
         period (str): Period for recurring tasks, such as 2w which means "2 weeks from now". Other accepted characters are s, m, h, d, w, which respectively correspond to seconds, minutes, hours, days and weeks. An integer must preeced the letter. Defaults to None.
         front (bool): Whether to set the task as a front task. Sometimes, you want a specific task in a specific context to always appear on the main todo listing, as it would with the --flat display, but while keeping other tasks tidied in their context. Defaults to False.
 ---
-def todo_done(ids):
+def todo_mark_as_done(ids):
     
     Set tasks identified by IDs as done.
 
@@ -83,7 +83,7 @@ def todo_history():
     Print the list of all tasks sorted by creation date, along with their properties.
 ---
 def todo_search(
-    term, is_done, context=None, before=None, after=None, case=False
+    term, is_done, context=None, before=None, after=None, case_sensitive=False,
 ):
     
     Search for tasks whose title contains the substring <term> based on the specified criteria.
@@ -94,7 +94,7 @@ def todo_search(
         context (str): Context for the search. Defaults to None.
         before (str): Limit search to tasks created before this moment. MOMENT can be a specific moment in time, in the following format: YYYY-MM-DD, YYYY-MM-DD HH:MM:SS, YYYY-MM-DDTHH:MM:SS. It can also be a delay, such as 2w which means "2 weeks from now". Other accepted characters are s, m, h, d, w, which respectively correspond to seconds, minutes, hours, days and weeks. An integer must preeced the letter. Defaults to None.
         after (str): Limit search to tasks created after this moment. MOMENT can be a specific moment in time, in the following format: YYYY-MM-DD, YYYY-MM-DD HH:MM:SS, YYYY-MM-DDTHH:MM:SS. It can also be a delay, such as 2w which means "2 weeks from now". Other accepted characters are s, m, h, d, w, which respectively correspond to seconds, minutes, hours, days and weeks. An integer must preeced the letter. Defaults to None.
-        case (bool): Whether the search is case sensitive. Defaults to False.
+        case_sensitive (bool): Whether the search is case sensitive. If case sensitive, set it to True.
 ---
 def todo_rm(ids):
     

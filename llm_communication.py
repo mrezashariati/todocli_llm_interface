@@ -119,7 +119,7 @@ def todo_add(
     log_and_exec_process(command, "todo_add")
 
 
-def todo_done(ids):
+def todo_mark_as_done(ids):
     """
     Set tasks identified by IDs as done.
 
@@ -141,7 +141,7 @@ def todo_done(ids):
     if ids_int:
         command = f"todo done {' '.join(ids_int)}"
 
-        log_and_exec_process(command, "todo_done")
+        log_and_exec_process(command, "todo_mark_as_done")
 
 
 def todo_task(
@@ -212,7 +212,9 @@ def todo_history():
     return log_and_exec_process(command, "todo_history")
 
 
-def todo_search(term, is_done=True, context=None, before=None, after=None, case=False):
+def todo_search(
+    term, is_done=True, context=None, before=None, after=None, case_sensitive=False
+):
     """
     Search for tasks whose title contains the substring <term> based on the specified criteria.
 
@@ -222,7 +224,7 @@ def todo_search(term, is_done=True, context=None, before=None, after=None, case=
         is_done (bool): Whether to search for done tasks. Defaults to True.
         before (str): Limit search to tasks created before this moment. MOMENT can be a specific moment in time, in the following format: YYYY-MM-DD, YYYY-MM-DD HH:MM:SS, YYYY-MM-DDTHH:MM:SS. It can also be a delay, such as 2w which means "2 weeks from now". Other accepted characters are s, m, h, d, w, which respectively correspond to seconds, minutes, hours, days and weeks. An integer must preeced the letter. Defaults to None.
         after (str): Limit search to tasks created after this moment. MOMENT can be a specific moment in time, in the following format: YYYY-MM-DD, YYYY-MM-DD HH:MM:SS, YYYY-MM-DDTHH:MM:SS. It can also be a delay, such as 2w which means "2 weeks from now". Other accepted characters are s, m, h, d, w, which respectively correspond to seconds, minutes, hours, days and weeks. An integer must preeced the letter. Defaults to None.
-        case (bool): Whether the search is case sensitive. Defaults to False.
+        case_sensitive (bool): Whether the search is case sensitive. Defaults to False.
 
     Returns:
         None
@@ -239,7 +241,7 @@ def todo_search(term, is_done=True, context=None, before=None, after=None, case=
         command += f" --before {before}"
     if after:
         command += f" --after {after}"
-    if case:
+    if case_sensitive:
         command += " --case"
 
     return log_and_exec_process(command, "todo_search")
@@ -404,7 +406,7 @@ functions_dict = {
     "todo": todo,
     "todo_add": todo_add,
     "todo_ctx": todo_ctx,
-    "todo_done": todo_done,
+    "todo_mark_as_done": todo_mark_as_done,
     "todo_future": todo_future,
     "todo_history": todo_history,
     "todo_location": todo_location,

@@ -164,3 +164,6 @@ cython_debug/
 
 # API Keys
 *.key
+
+# Project Specific Files
+aws_api_quota_remaining

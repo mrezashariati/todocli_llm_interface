@@ -9,8 +9,12 @@ TODO:
             - NOTE: not mentioning names in "" leads to error.
         - mark task as done (2 steps) ✅
         - removing context (1 step) ✅
-        - modifying context attributes
         - search for tasks
+            - done, undone ✅
+            - context ✅
+            - before, after
+            - case sensitive
+        - modifying context attributes
         - ping tasks
         - purge tasks
         - adding deadline, start, period or any sort of time (2 step)
@@ -33,6 +37,9 @@ Notes:
  - can specify the steps the model needs to take to respond for each specific query and command
  - as mentioned in OpenAI's website: Call the model again by appending the function response as a new message, and let the model summarize the results back to the user.
  - in each func documentation, can write cases where this function is suitable
+ - setting temp to zero, makes the model heavily rely on prompt and trying to mimic it. Be aware of unwanted biases in the prompt.
+ - sometimes model hallucinates about the existance of some functions. when told it the func doesn't exist, it used the right function. 
+    - one solution can make a list of non-existant functions :)
 
 Questions:
  - design a feedback loop. how the model is meant to know the meaning of errors?

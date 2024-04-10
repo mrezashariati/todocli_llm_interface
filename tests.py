@@ -285,7 +285,7 @@ instruction: can you mark elden ring, writing test and water the pots as done?""
             perms = [" ".join([str(j) for j in i]) for i in list(permutations(ids))]
             perms = [f"todo done {i}" for i in perms]
             perms_exist = [
-                call(i, "todo_done") in mock_log_and_exec_process.mock_calls
+                call(i, "todo_mark_as_done") in mock_log_and_exec_process.mock_calls
                 for i in perms
             ]
             assert reduce(lambda a, b: a or b, perms_exist)
