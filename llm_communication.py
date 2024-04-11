@@ -558,43 +558,23 @@ def standardize_date_format(text):
     return date_pattern.sub(replace_with_standard_format, text)
 
 
-if __name__ == "__main__":
-    cleanup = False
+def query_llm(input_prompt, cleanup=False):
     if cleanup:
         reset_todocli()
 
-    inputs = []
-    logging.info("\n----------\nSession Start.")
-    print(
-        """Prompt (
-        start operation: gg,
-        exit: exit()
-    ): """
-    )
-    while True:
-        inputs.append(input("// "))
-        if "exit" in inputs[-1].lower():
-            break
-        if "gg" in inputs[-1].lower():
-            logging.info("-----Request Start-----")
-            inputs[-1] = inputs[-1].split("gg")[0]
-            USER_PROMPT = f"""
+    logging.info("-----Request Start-----")
+    USER_PROMPT = f"""
 here is the list of my current tasks:
 ID | TaskName ⌛ Deadline ★Priority ,Context
 {process_bash_output(todo(flat=True)).replace("#", ",")}
-instruction: """ + "\n".join(
-                inputs
-            )
-            if not USER_PROMPT:
-                print.info("Empty prompt. exiting...")
-                break
-            logging.info(f"\nuser prompt:\n-----{USER_PROMPT}\n-----")
-            FULL_PROMPT = BASE_PROMPT + f"\nUSER: {USER_PROMPT}\n"
-            print("Communicating with LLM...")
-            response = llama_generate(FULL_PROMPT, AWS_API_KEY)
-            execution_process(parse_llm_output(response))
-            inputs = []
-            print("Operation finished. Waiting for the next request...")
-            logging.info("-----Request End-----")
+instruction: {input_prompt}"""
 
-    logging.info("Session End\n----------")
+    logging.info(f"\nuser prompt:\n-----{USER_PROMPT}\n-----")
+
+    FULL_PROMPT = BASE_PROMPT + f"\nUSER: {USER_PROMPT}\n"
+
+    response = llama_generate(FULL_PROMPT, AWS_API_KEY)
+    execution_process(parse_llm_output(response))
+    logging.info("-----Request End-----")
+    
+    return response
