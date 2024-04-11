@@ -10,7 +10,10 @@ TODO:
         - mark task as done (2 steps) ✅
         - removing context (1 step) ✅
         - search for tasks
-            - done, undone ✅
+            - done, undone
+                - works: can you search for 'elden' in my unfinished tasks?
+                - works: in my unfinished tasks, can you search for 'elden'?
+                - doesn't work: can you in my unfinished tasks, search for 'elden'?
             - context ✅
             - before, after
             - case sensitive
@@ -26,20 +29,26 @@ TODO:
     - more robust way to map llm func params to actual func params. use string diff. Some libraries are already doing this ✅🤔
     - tune tempereture. Start with 0 temperature
     - prevent from responding to irrelevant requests
+    - some suggestions for prompt fine tuning:
+        - use [INST] and [INST/] tags
+        - tell the model to think step by step and double check it's reasoning and only output when it is done with reasoning and is sure the reasoning is correct.
+        -
     - Frontend: use streamlit
   
 Notes:
- - LLM is not consistant with finding tasks' ids, maybe it's better to always use the task names. In this case repetitive task names may be problematic.
- - spell checking. may need to first find the correct task title and id.
- - may be good to store the last n characters of the conversation and input it as context to the model.
- - model may perform repetitive operations. when asked to merge, it added some tasks first which is wrong.
- - can let the model hallucinate to see other scenarios and test cases and the model's response
- - can specify the steps the model needs to take to respond for each specific query and command
- - as mentioned in OpenAI's website: Call the model again by appending the function response as a new message, and let the model summarize the results back to the user.
- - in each func documentation, can write cases where this function is suitable
- - setting temp to zero, makes the model heavily rely on prompt and trying to mimic it. Be aware of unwanted biases in the prompt.
- - sometimes model hallucinates about the existance of some functions. when told it the func doesn't exist, it used the right function. 
+    - LLM is not consistant with finding tasks' ids, maybe it's better to always use the task names. In this case repetitive task names may be problematic.
+    - spell checking. may need to first find the correct task title and id.
+    - may be good to store the last n characters of the conversation and input it as context to the model.
+    - model may perform repetitive operations. when asked to merge, it added some tasks first which is wrong.
+    - can let the model hallucinate to see other scenarios and test cases and the model's response
+    - can specify the steps the model needs to take to respond for each specific query and command
+    - as mentioned in OpenAI's website: Call the model again by appending the function response as a new message, and let the model summarize the results back to the user.
+    - in each func documentation, can write cases where this function is suitable
+    - setting temp to zero, makes the model heavily rely on prompt and trying to mimic it. Be aware of unwanted biases in the prompt.
+    - sometimes model hallucinates about the existance of some functions. when told it the func doesn't exist, it used the right function. 
     - one solution can make a list of non-existant functions :)
+    - model can't understand context and list are the same thing when used in conversation.
+    - LLM Json output validation: https://www.promptfoo.dev/docs/guides/evaluate-json/
 
 Questions:
- - design a feedback loop. how the model is meant to know the meaning of errors?
+    - design a feedback loop. how the model is meant to know the meaning of errors?

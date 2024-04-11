@@ -43,9 +43,9 @@ def log_and_exec_process(command, func_name):
     # logging.info(f"{func_name} finished")
     output = process_bash_output(p.stdout)
     if output:
-        logging.info(
-            f"command output:\n-----\n{output}\n-----",
-        )
+        # logging.info(
+        #     f"command output:\n-----\n{output}\n-----",
+        # )
         return output
 
 

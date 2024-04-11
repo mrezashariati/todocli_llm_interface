@@ -87,7 +87,7 @@ instruction: can you remove "bananas" and "rust" from my items?"""
 here is the list of my current tasks:
 ID | TaskName ⌛ Deadline Priority ,Context
 {process_bash_output(todo(flat=True)).replace("#", ",")}
-instruction: can you add "Codeing Session" and "Mamamla" to my homework list?"""
+instruction: can you add "Coding Session" and "Mamamla" to my homework context?"""
             FULL_PROMPT = BASE_PROMPT + f"\nUSER: {USER_PROMPT}\n"
             response = llama_generate(FULL_PROMPT, AWS_API_KEY)
             execution_process(parse_llm_output(response))
@@ -96,7 +96,7 @@ instruction: can you add "Codeing Session" and "Mamamla" to my homework list?"""
                 any_order=True,
                 calls=[
                     call(
-                        """todo add "Codeing Session" --context "homework" --priority 1""",
+                        """todo add "Coding Session" --context "homework" --priority 1""",
                         "todo_add",
                     ),
                     call(
