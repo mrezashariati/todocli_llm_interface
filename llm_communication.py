@@ -87,9 +87,9 @@ def get_tasks_data():
     ## Parse each data line using the detected field boundaries
     for line in lines[2:]:  # Skip headers and dashes line
         id = line[field_bounds[0][0] : field_bounds[0][1]].strip()
-        tasks_data[id]["created"] = line[
-            field_bounds[2][0] : field_bounds[2][1]
-        ].strip()
+        # tasks_data[id]["created"] = line[
+        #     field_bounds[2][0] : field_bounds[2][1]
+        # ].strip()
         if len(field_bounds) > 4:
             tasks_data[id]["status"] = line[
                 field_bounds[4][0] : field_bounds[4][1]
@@ -524,6 +524,7 @@ def llama_generate(prompt, api_token, max_gen_len=512, temperature=0.2, top_p=0.
     with open("./aws_api_quota_remaining", "w") as f:
         f.write(str(aws_api_quota_remaining))
     logging.info(f"ramining AWS API calls: {aws_api_quota_remaining}")
+
     result = json.loads(res.text)["body"]["generation"]
     logging.info(
         f"Raw LLM response:\n----------\n{result}\n----------",

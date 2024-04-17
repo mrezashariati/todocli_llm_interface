@@ -22,33 +22,32 @@ with open("./base_prompt.txt", "r") as f:
     BASE_PROMPT = f.read()
 
 
+def setup_testing_env():
+    reset_todocli()
+    # Add some tasks to further run some tests on them.
+    todo_add(title="Elden Ring", context="games", priority=5)  # ID:1
+    todo_add(title="Rust", context="games_wishlist", priority=1)  # ID:2
+    todo_add(title="Study Math", context="study", priority=2)  # ID:3
+    todo_add(title="Planning", context="work", priority=3)  # ID:4
+    todo_add(title="Write Test", context="work", priority=4)  # ID:5
+    todo_add(title="Write Diary", context="personal", priority=2)  # ID:6
+    todo_add(title="cleaning", context="home", priority=5)  # ID:7
+    todo_add(title="water the pots", context="home", priority=3)  # ID:8
+    todo_add(title="bananas", context="shoppinglist", priority=1)  # ID:b
+    todo_add(title="apples", context="shoppinglist", priority=1)  # ID:c
+    todo_add(title="Deutsch Schreiben", context="homework", priority=1)  # ID:d
+    todo_add(title="Apply", context="work", priority=3)  # ID:e
+    todo_add(title="washing the dishes", context="home", priority=5)  # ID:f
+
+    # todo_add(title="Planning", context="work", priority=3)
+    # todo_add(title="Write Test", context="work", priority=4)
+    # todo_add(title="Apply", context="work", priority=3)
+    # todo_add(title="Ride to office", context="work", priority=1)
+
+
 class TestLLMCommunication(unittest.TestCase):
-    def setup_testing_env(self):
-        reset_todocli()
-        # Add some tasks to further run some tests on them.
-        todo_add(title="Elden Ring", context="games", priority=5)  # ID:1
-        todo_add(title="Rust", context="games_wishlist", priority=1)  # ID:2
-        todo_add(title="Study Math", context="study", priority=2)  # ID:3
-        todo_add(title="Planning", context="work", priority=3)  # ID:4
-        todo_add(title="Write Test", context="work", priority=4)  # ID:5
-        todo_add(title="Write Diary", context="personal", priority=2)  # ID:6
-        todo_add(title="cleaning", context="home", priority=5)  # ID:7
-        todo_add(title="water the pots", context="home", priority=3)  # ID:8
-        todo_add(title="Read AD last lecture", context="study", priority=4)  # ID:9
-        todo_add(title="play dota 2", context="hobby", priority=1)  # ID:a
-        todo_add(title="bananas", context="shoppinglist", priority=1)  # ID:b
-        todo_add(title="apples", context="shoppinglist", priority=1)  # ID:c
-        todo_add(title="Deutsch Schreiben", context="homework", priority=1)  # ID:d
-        todo_add(title="Apply", context="work", priority=3)  # ID:e
-        todo_add(title="washing the dishes", context="home", priority=5)  # ID:f
-
-        # todo_add(title="Planning", context="work", priority=3)
-        # todo_add(title="Write Test", context="work", priority=4)
-        # todo_add(title="Apply", context="work", priority=3)
-        # todo_add(title="Ride to office", context="work", priority=1)
-
     def test_todo_rm_single_task(self):
-        self.setup_testing_env()
+        setup_testing_env()
         with patch(
             "llm_communication.log_and_exec_process",
             wraps=llm_communication.log_and_exec_process,
@@ -64,7 +63,7 @@ instruction: can you remove "elden ring" from my items?"""
             mock_log_and_exec_process.assert_any_call("todo rm 1", "todo_rm")
 
     def test_todo_rm_mult_tasks(self):
-        self.setup_testing_env()
+        setup_testing_env()
         with patch(
             "llm_communication.log_and_exec_process",
             wraps=llm_communication.log_and_exec_process,
@@ -84,7 +83,7 @@ instruction: can you remove "bananas" and "rust" from my items?"""
             )
 
     def test_todo_add_mult_task(self):
-        self.setup_testing_env()
+        setup_testing_env()
         with patch(
             "llm_communication.log_and_exec_process",
             wraps=llm_communication.log_and_exec_process,
@@ -112,7 +111,7 @@ instruction: I want to add some new tasks. add "mamala" and "coding session" to 
             )
 
     def test_todo_list_context(self):
-        self.setup_testing_env()
+        setup_testing_env()
         with patch(
             "llm_communication.log_and_exec_process",
             wraps=llm_communication.log_and_exec_process,
@@ -128,7 +127,7 @@ instruction: can you list my items in games list?"""
             mock_log_and_exec_process.assert_any_call("""todo \"games\"""", "todo")
 
     def test_todo_move_from_ctx_to_ctx(self):
-        self.setup_testing_env()
+        setup_testing_env()
         with patch(
             "llm_communication.log_and_exec_process",
             wraps=llm_communication.log_and_exec_process,
@@ -146,7 +145,7 @@ instruction: can you move the items in study context to homework context?"""
             )
 
     def test_todo_task_rename_single_task(self):
-        self.setup_testing_env()
+        setup_testing_env()
         with patch(
             "llm_communication.log_and_exec_process",
             wraps=llm_communication.log_and_exec_process,
@@ -164,7 +163,7 @@ instruction: can you change the name of "elden ring" to "elden lord"? """
             )
 
     def test_todo_task_change_priority_single_task(self):
-        self.setup_testing_env()
+        setup_testing_env()
         with patch(
             "llm_communication.log_and_exec_process",
             wraps=llm_communication.log_and_exec_process,
@@ -182,7 +181,7 @@ instruction: can you change the priority of elden ring to 7?"""
             )
 
     def test_todo_task_change_priority_mult_task(self):
-        self.setup_testing_env()
+        setup_testing_env()
         with patch(
             "llm_communication.log_and_exec_process",
             wraps=llm_communication.log_and_exec_process,
@@ -210,7 +209,7 @@ instruction: can you change the priority of elden ring and cleaning to 10?"""
             )
 
     def test_todo_task_change_context_single_task(self):
-        self.setup_testing_env()
+        setup_testing_env()
         with patch(
             "llm_communication.log_and_exec_process",
             wraps=llm_communication.log_and_exec_process,
@@ -228,7 +227,7 @@ instruction: can you change the context of "writing test" to homework?"""
             )
 
     def test_todo_task_set_deadline_single_task(self):
-        self.setup_testing_env()
+        setup_testing_env()
         with patch(
             "llm_communication.log_and_exec_process",
             wraps=llm_communication.log_and_exec_process,
@@ -246,7 +245,7 @@ instruction: can you set the deadline of study math to September 10 2025?"""
             )
 
     def test_todo_task_set_start_single_task(self):
-        self.setup_testing_env()
+        setup_testing_env()
         with patch(
             "llm_communication.log_and_exec_process",
             wraps=llm_communication.log_and_exec_process,
@@ -264,7 +263,7 @@ instruction: can you set the start of planning to 2024/10/11 12:34:22?"""
             )
 
     def test_todo_done_mult_task(self):
-        self.setup_testing_env()
+        setup_testing_env()
         with patch(
             "llm_communication.log_and_exec_process",
             wraps=llm_communication.log_and_exec_process,
@@ -287,7 +286,7 @@ instruction: can you mark elden ring, writing test and water the pots as done?""
             assert reduce(lambda a, b: a or b, perms_exist)
 
     def test_todo_rmctx_mult_ctx(self):
-        self.setup_testing_env()
+        setup_testing_env()
         with patch(
             "llm_communication.log_and_exec_process",
             wraps=llm_communication.log_and_exec_process,
@@ -304,13 +303,13 @@ instruction: remove my home, work, and shoppinglist contexts please."""
                 calls=[
                     call("""todo rmctx "work" --force""", "todo_rmctx"),
                     call("""todo rmctx "home" --force""", "todo_rmctx"),
-                    call("""todo rmctx "shppinglist" --force""", "todo_rmctx"),
+                    call("""todo rmctx "shoppinglist" --force""", "todo_rmctx"),
                 ],
                 any_order=True,
             )
 
     def test_todo_search(self):
-        self.setup_testing_env()
+        setup_testing_env()
         with patch(
             "llm_communication.log_and_exec_process",
             wraps=llm_communication.log_and_exec_process,
@@ -328,7 +327,7 @@ instruction: I am looking for undone tasks having study in them. can you do that
             )
 
     def test_todo_done_based_on_order(self):
-        self.setup_testing_env()
+        setup_testing_env()
         with patch(
             "llm_communication.log_and_exec_process",
             wraps=llm_communication.log_and_exec_process,
@@ -353,3 +352,4 @@ instruction: Mark the first and third items on my 'work' context as done."""
 
 if __name__ == "__main__":
     unittest.main()
+    # setup_testing_env()
