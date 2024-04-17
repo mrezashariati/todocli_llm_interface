@@ -8,6 +8,7 @@ from difflib import SequenceMatcher
 import numpy as np
 import inspect
 import re
+from collections import defaultdict
 
 logging.basicConfig(
     level=logging.INFO,
@@ -49,7 +50,59 @@ def log_and_exec_process(command, func_name):
         return output
 
 
-def todo(context="", flat=False, tidy=False):
+def get_tasks_data():
+    tasks_data = defaultdict(dict)
+    tasks_undone_flat_list = todo_list(flat=True)
+    tasks_history = todo_history()
+
+    # Parse todo --flat output
+    pattern = re.compile(
+        # r"^\s(\w+)\s+\|\s+([^★#]+)(?:★(\d+))?\s?(?:#(\w+))?",
+        r"^\s(\w+)\s+\|\s+([^★#\U0000231b]+)(?:\U0000231b[^★#]+)?(?:★(\d+))?\s?(?:#(\w+))?",
+        re.MULTILINE,
+    )
+    for i, match in enumerate(pattern.finditer(tasks_undone_flat_list)):
+        id = match.group(1)
+        tasks_data[id]["row_number"] = i
+        tasks_data[id]["priority"] = match.group(3)
+        tasks_data[id]["context"] = match.group(4)
+        tasks_data[id]["title"] = match.group(2).strip()
+
+    # Parse todo --history output
+    lines = tasks_history.strip().split("\n")
+    header_line = lines[1]  ## This line contains the dashes under the headers
+    ## Find all start and end indices of '-' sections to determine column boundaries
+    field_bounds = []
+    last_pos = 0
+    while True:
+        start = header_line.find("-", last_pos)
+        if start == -1:
+            break
+        end = header_line.find(" ", start)
+        if end == -1:
+            end = len(header_line)
+        field_bounds.append((start, end))
+        last_pos = end
+
+    ## Parse each data line using the detected field boundaries
+    for line in lines[2:]:  # Skip headers and dashes line
+        id = line[field_bounds[0][0] : field_bounds[0][1]].strip()
+        tasks_data[id]["created"] = line[
+            field_bounds[2][0] : field_bounds[2][1]
+        ].strip()
+        if len(field_bounds) > 4:
+            tasks_data[id]["status"] = line[
+                field_bounds[4][0] : field_bounds[4][1]
+            ].strip()
+        else:
+            tasks_data[id]["status"] = ""
+
+    # Format the result
+    tasks_data = [{"id": key, **value} for key, value in tasks_data.items()]
+    return json.dumps(tasks_data)
+
+
+def todo_list(context="", flat=False, tidy=False):
     """
     Print the list of the tasks based on the context and formatted flat or tidy.
 
@@ -403,7 +456,7 @@ def todo_location():
 
 
 functions_dict = {
-    "todo": todo,
+    "todo_list": todo_list,
     "todo_add": todo_add,
     "todo_ctx": todo_ctx,
     "todo_mark_as_done": todo_mark_as_done,
@@ -455,7 +508,7 @@ def execution_process(queue):
         output = func(**func_params)
 
 
-def llama_generate(prompt, api_token, max_gen_len=320, temperature=0.2, top_p=0.9):
+def llama_generate(prompt, api_token, max_gen_len=512, temperature=0.2, top_p=0.9):
     global aws_api_quota_remaining
     url = "https://6xtdhvodk2.execute-api.us-west-2.amazonaws.com/dsa_llm/generate"
     body = {
@@ -494,7 +547,7 @@ def get_task_id(task_name):
     task_name = str(task_name)
 
     task_list = list(
-        filter(lambda x: x, process_bash_output(todo(flat=True)).split("\n"))
+        filter(lambda x: x, process_bash_output(todo_list(flat=True)).split("\n"))
     )
     task_list = [
         ((e.split("|")[0]).strip(), (e.split("|")[1]).strip()) for e in task_list
@@ -579,9 +632,8 @@ if __name__ == "__main__":
             logging.info("-----Request Start-----")
             inputs[-1] = inputs[-1].split("gg")[0]
             USER_PROMPT = f"""
-here is the list of my current tasks:
-ID | TaskName ⌛ Deadline ★Priority ,Context
-{process_bash_output(todo(flat=True)).replace("#", ",")}
+here is the list of my current tasks in JSON format:
+{get_tasks_data()}
 instruction: """ + "\n".join(
                 inputs
             )

@@ -168,3 +168,5 @@ cython_debug/
 # Project Specific Files
 aws_api_quota_remaining
 TODO.txt
+llm_communication.ipynb
+Task_1_Test_Cases.ipynb
