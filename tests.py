@@ -52,11 +52,14 @@ class TestLLMCommunication(unittest.TestCase):
             "llm_communication.log_and_exec_process",
             wraps=llm_communication.log_and_exec_process,
         ) as mock_log_and_exec_process:
-            USER_PROMPT = f"""
-here is the list of my current tasks in JSON format:
-{get_tasks_data()}
-instruction: can you remove "elden ring" from my items?"""
-            FULL_PROMPT = BASE_PROMPT + f"\nUSER: {USER_PROMPT}\n"
+
+            USER_PROMPT = (
+                'can you remove "elden ring" from my items?'
+                + f"\nhere is the list of my current tasks : {get_tasks_data()}"
+                + "\n[/INST]"
+            )
+
+            FULL_PROMPT = BASE_PROMPT + USER_PROMPT
             response = llama_generate(FULL_PROMPT, AWS_API_KEY)
             execution_process(parse_llm_output(response))
             # Assertion
@@ -68,11 +71,14 @@ instruction: can you remove "elden ring" from my items?"""
             "llm_communication.log_and_exec_process",
             wraps=llm_communication.log_and_exec_process,
         ) as mock_log_and_exec_process:
-            USER_PROMPT = f"""
-here is the list of my current tasks in JSON format:
-{get_tasks_data()}
-instruction: can you remove "bananas" and "rust" from my items?"""
-            FULL_PROMPT = BASE_PROMPT + f"\nUSER: {USER_PROMPT}\n"
+
+            USER_PROMPT = (
+                'can you remove "bananas" and "rust" from my items?'
+                + f"\nhere is the list of my current tasks : {get_tasks_data()}"
+                + "\n[/INST]"
+            )
+
+            FULL_PROMPT = BASE_PROMPT + USER_PROMPT
             response = llama_generate(FULL_PROMPT, AWS_API_KEY)
             execution_process(parse_llm_output(response))
             # Assertion
@@ -88,11 +94,14 @@ instruction: can you remove "bananas" and "rust" from my items?"""
             "llm_communication.log_and_exec_process",
             wraps=llm_communication.log_and_exec_process,
         ) as mock_log_and_exec_process:
-            USER_PROMPT = f"""
-here is the list of my current tasks in JSON format:
-{get_tasks_data()}
-instruction: I want to add some new tasks. add "mamala" and "coding session" to my homeworks?"""
-            FULL_PROMPT = BASE_PROMPT + f"\nUSER: {USER_PROMPT}\n"
+
+            USER_PROMPT = (
+                'I want to add some new tasks. add "mamala" and "coding session" to my homeworks?'
+                + f"\nhere is the list of my current tasks : {get_tasks_data()}"
+                + "\n[/INST]"
+            )
+
+            FULL_PROMPT = BASE_PROMPT + USER_PROMPT
             response = llama_generate(FULL_PROMPT, AWS_API_KEY)
             execution_process(parse_llm_output(response))
             # Assertion
@@ -116,11 +125,14 @@ instruction: I want to add some new tasks. add "mamala" and "coding session" to 
             "llm_communication.log_and_exec_process",
             wraps=llm_communication.log_and_exec_process,
         ) as mock_log_and_exec_process:
-            USER_PROMPT = f"""
-here is the list of my current tasks in JSON format:
-{get_tasks_data()}
-instruction: can you list my items in games list?"""
-            FULL_PROMPT = BASE_PROMPT + f"\nUSER: {USER_PROMPT}\n"
+
+            USER_PROMPT = (
+                "can you list my items in games list?"
+                + f"\nhere is the list of my current tasks : {get_tasks_data()}"
+                + "\n[/INST]"
+            )
+
+            FULL_PROMPT = BASE_PROMPT + USER_PROMPT
             response = llama_generate(FULL_PROMPT, AWS_API_KEY)
             execution_process(parse_llm_output(response))
             # Assertion
@@ -132,11 +144,14 @@ instruction: can you list my items in games list?"""
             "llm_communication.log_and_exec_process",
             wraps=llm_communication.log_and_exec_process,
         ) as mock_log_and_exec_process:
-            USER_PROMPT = f"""
-here is the list of my current tasks in JSON format:
-{get_tasks_data()}
-instruction: can you move the items in study context to homework context?"""
-            FULL_PROMPT = BASE_PROMPT + f"\nUSER: {USER_PROMPT}\n"
+
+            USER_PROMPT = (
+                "can you move the items in study context to homework context?"
+                + f"\nhere is the list of my current tasks : {get_tasks_data()}"
+                + "\n[/INST]"
+            )
+
+            FULL_PROMPT = BASE_PROMPT + USER_PROMPT
             response = llama_generate(FULL_PROMPT, AWS_API_KEY)
             execution_process(parse_llm_output(response))
             # Assertion
@@ -150,11 +165,14 @@ instruction: can you move the items in study context to homework context?"""
             "llm_communication.log_and_exec_process",
             wraps=llm_communication.log_and_exec_process,
         ) as mock_log_and_exec_process:
-            USER_PROMPT = f"""
-here is the list of my current tasks in JSON format:
-{get_tasks_data()}
-instruction: can you change the name of "elden ring" to "elden lord"? """
-            FULL_PROMPT = BASE_PROMPT + f"\nUSER: {USER_PROMPT}\n"
+
+            USER_PROMPT = (
+                'can you change the name of "elden ring" to "elden lord"?'
+                + f"\nhere is the list of my current tasks : {get_tasks_data()}"
+                + "\n[/INST]"
+            )
+
+            FULL_PROMPT = BASE_PROMPT + USER_PROMPT
             response = llama_generate(FULL_PROMPT, AWS_API_KEY)
             execution_process(parse_llm_output(response))
             # Assertion
@@ -168,11 +186,14 @@ instruction: can you change the name of "elden ring" to "elden lord"? """
             "llm_communication.log_and_exec_process",
             wraps=llm_communication.log_and_exec_process,
         ) as mock_log_and_exec_process:
-            USER_PROMPT = f"""
-here is the list of my current tasks in JSON format:
-{get_tasks_data()}
-instruction: can you change the priority of elden ring to 7?"""
-            FULL_PROMPT = BASE_PROMPT + f"\nUSER: {USER_PROMPT}\n"
+
+            USER_PROMPT = (
+                "can you change the priority of elden ring to 7?"
+                + f"\nhere is the list of my current tasks : {get_tasks_data()}"
+                + "\n[/INST]"
+            )
+
+            FULL_PROMPT = BASE_PROMPT + USER_PROMPT
             response = llama_generate(FULL_PROMPT, AWS_API_KEY)
             execution_process(parse_llm_output(response))
             # Assertion
@@ -186,11 +207,14 @@ instruction: can you change the priority of elden ring to 7?"""
             "llm_communication.log_and_exec_process",
             wraps=llm_communication.log_and_exec_process,
         ) as mock_log_and_exec_process:
-            USER_PROMPT = f"""
-here is the list of my current tasks in JSON format:
-{get_tasks_data()}
-instruction: can you change the priority of elden ring and cleaning to 10?"""
-            FULL_PROMPT = BASE_PROMPT + f"\nUSER: {USER_PROMPT}\n"
+
+            USER_PROMPT = (
+                "can you change the priority of elden ring and cleaning to 10?"
+                + f"\nhere is the list of my current tasks : {get_tasks_data()}"
+                + "\n[/INST]"
+            )
+
+            FULL_PROMPT = BASE_PROMPT + USER_PROMPT
             response = llama_generate(FULL_PROMPT, AWS_API_KEY)
             execution_process(parse_llm_output(response))
             # Assertion
@@ -214,11 +238,14 @@ instruction: can you change the priority of elden ring and cleaning to 10?"""
             "llm_communication.log_and_exec_process",
             wraps=llm_communication.log_and_exec_process,
         ) as mock_log_and_exec_process:
-            USER_PROMPT = f"""
-here is the list of my current tasks in JSON format:
-{get_tasks_data()}
-instruction: can you change the context of "writing test" to homework?"""
-            FULL_PROMPT = BASE_PROMPT + f"\nUSER: {USER_PROMPT}\n"
+
+            USER_PROMPT = (
+                'can you change the context of "writing test" to homework?'
+                + f"\nhere is the list of my current tasks : {get_tasks_data()}"
+                + "\n[/INST]"
+            )
+
+            FULL_PROMPT = BASE_PROMPT + USER_PROMPT
             response = llama_generate(FULL_PROMPT, AWS_API_KEY)
             execution_process(parse_llm_output(response))
             # Assertion
@@ -232,11 +259,14 @@ instruction: can you change the context of "writing test" to homework?"""
             "llm_communication.log_and_exec_process",
             wraps=llm_communication.log_and_exec_process,
         ) as mock_log_and_exec_process:
-            USER_PROMPT = f"""
-here is the list of my current tasks in JSON format:
-{get_tasks_data()}
-instruction: can you set the deadline of study math to September 10 2025?"""
-            FULL_PROMPT = BASE_PROMPT + f"\nUSER: {USER_PROMPT}\n"
+
+            USER_PROMPT = (
+                "can you set the deadline of study math to September 10 2025?"
+                + f"\nhere is the list of my current tasks : {get_tasks_data()}"
+                + "\n[/INST]"
+            )
+
+            FULL_PROMPT = BASE_PROMPT + USER_PROMPT
             response = llama_generate(FULL_PROMPT, AWS_API_KEY)
             execution_process(parse_llm_output(response))
             # Assertion
@@ -250,11 +280,14 @@ instruction: can you set the deadline of study math to September 10 2025?"""
             "llm_communication.log_and_exec_process",
             wraps=llm_communication.log_and_exec_process,
         ) as mock_log_and_exec_process:
-            USER_PROMPT = f"""
-here is the list of my current tasks in JSON format:
-{get_tasks_data()}
-instruction: can you set the start of planning to 2024/10/11 12:34:22?"""
-            FULL_PROMPT = BASE_PROMPT + f"\nUSER: {USER_PROMPT}\n"
+
+            USER_PROMPT = (
+                "can you set the start of planning to 2024/10/11 12:34:22?"
+                + f"\nhere is the list of my current tasks : {get_tasks_data()}"
+                + "\n[/INST]"
+            )
+
+            FULL_PROMPT = BASE_PROMPT + USER_PROMPT
             response = llama_generate(FULL_PROMPT, AWS_API_KEY)
             execution_process(parse_llm_output(response))
             # Assertion
@@ -268,11 +301,14 @@ instruction: can you set the start of planning to 2024/10/11 12:34:22?"""
             "llm_communication.log_and_exec_process",
             wraps=llm_communication.log_and_exec_process,
         ) as mock_log_and_exec_process:
-            USER_PROMPT = f"""
-here is the list of my current tasks in JSON format:
-{get_tasks_data()}
-instruction: can you mark elden ring, writing test and water the pots as done?"""
-            FULL_PROMPT = BASE_PROMPT + f"\nUSER: {USER_PROMPT}\n"
+
+            USER_PROMPT = (
+                "can you mark elden ring, writing test and water the pots as done?"
+                + f"\nhere is the list of my current tasks : {get_tasks_data()}"
+                + "\n[/INST]"
+            )
+
+            FULL_PROMPT = BASE_PROMPT + USER_PROMPT
             response = llama_generate(FULL_PROMPT, AWS_API_KEY)
             execution_process(parse_llm_output(response))
             # Assertion
@@ -291,11 +327,14 @@ instruction: can you mark elden ring, writing test and water the pots as done?""
             "llm_communication.log_and_exec_process",
             wraps=llm_communication.log_and_exec_process,
         ) as mock_log_and_exec_process:
-            USER_PROMPT = f"""
-here is the list of my current tasks in JSON format:
-{get_tasks_data()}
-instruction: remove my home, work, and shoppinglist contexts please."""
-            FULL_PROMPT = BASE_PROMPT + f"\nUSER: {USER_PROMPT}\n"
+
+            USER_PROMPT = (
+                "remove my home, work, and shoppinglist contexts please."
+                + f"\nhere is the list of my current tasks : {get_tasks_data()}"
+                + "\n[/INST]"
+            )
+
+            FULL_PROMPT = BASE_PROMPT + USER_PROMPT
             response = llama_generate(FULL_PROMPT, AWS_API_KEY)
             execution_process(parse_llm_output(response))
             # Assertion
@@ -314,11 +353,14 @@ instruction: remove my home, work, and shoppinglist contexts please."""
             "llm_communication.log_and_exec_process",
             wraps=llm_communication.log_and_exec_process,
         ) as mock_log_and_exec_process:
-            USER_PROMPT = f"""
-here is the list of my current tasks in JSON format:
-{get_tasks_data()}
-instruction: I am looking for undone tasks having study in them. can you do that for me please? I neeeeeeeeeed taht really"""
-            FULL_PROMPT = BASE_PROMPT + f"\nUSER: {USER_PROMPT}\n"
+
+            USER_PROMPT = (
+                "I am looking for undone tasks having study in them. can you do that for me please? I neeeeeeeeeed taht really"
+                + f"\nhere is the list of my current tasks : {get_tasks_data()}"
+                + "\n[/INST]"
+            )
+
+            FULL_PROMPT = BASE_PROMPT + USER_PROMPT
             response = llama_generate(FULL_PROMPT, AWS_API_KEY)
             execution_process(parse_llm_output(response))
             # Assertion

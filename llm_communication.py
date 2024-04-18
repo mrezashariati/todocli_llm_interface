@@ -360,7 +360,7 @@ def todo_purge(force=False, before=None):
     log_and_exec_process(command, "todo_purge")
 
 
-def todo_ctx(
+def todo_edit_ctx(
     context, flat=False, tidy=False, priority=None, visibility=None, name=None
 ):
     """
@@ -387,7 +387,7 @@ def todo_ctx(
     if name:
         command += f" --name '{name}'"
 
-    log_and_exec_process(command, "todo_ctx")
+    log_and_exec_process(command, "todo_edit_ctx")
 
 
 def todo_mv(source_ctx, destination_ctx):
@@ -458,7 +458,7 @@ def todo_location():
 functions_dict = {
     "todo_list": todo_list,
     "todo_add": todo_add,
-    "todo_ctx": todo_ctx,
+    "todo_edit_ctx": todo_edit_ctx,
     "todo_mark_as_done": todo_mark_as_done,
     "todo_future": todo_future,
     "todo_history": todo_history,
@@ -477,7 +477,7 @@ def parse_llm_output(text):
     global functions_dict
     execution_queue = []
 
-    processed = text.split("<JSON>")[1].split("<JSON/>")[0].strip()
+    processed = text.split("<JSON>")[1].split("</JSON>")[0].strip()
 
     # correct some common mistakes in json formatting
     # Replace 'True' with 'true' and 'False' with 'false'
@@ -613,7 +613,10 @@ def standardize_date_format(text):
 
 
 if __name__ == "__main__":
+    # Setting flags
     cleanup = False
+    debug = False
+
     if cleanup:
         reset_todocli()
 
@@ -632,20 +635,17 @@ if __name__ == "__main__":
         if "gg" in inputs[-1].lower():
             logging.info("-----Request Start-----")
             inputs[-1] = inputs[-1].split("gg")[0]
-            USER_PROMPT = f"""
-here is the list of my current tasks in JSON format:
-{get_tasks_data()}
-instruction: """ + "\n".join(
-                inputs
+            USER_PROMPT = (
+                "\n".join(inputs)
+                + f"\nhere is the list of my current tasks : {get_tasks_data()}"
+                + "\n[/INST]"
             )
-            if not USER_PROMPT:
-                print.info("Empty prompt. exiting...")
-                break
-            logging.info(f"\nuser prompt:\n-----{USER_PROMPT}\n-----")
-            FULL_PROMPT = BASE_PROMPT + f"\nUSER: {USER_PROMPT}\n"
+            logging.info(f"\nuser prompt:\n-----\n{USER_PROMPT}\n-----")
+            FULL_PROMPT = BASE_PROMPT + USER_PROMPT if not debug else "\n".join(inputs)
             print("Communicating with LLM...")
             response = llama_generate(FULL_PROMPT, AWS_API_KEY)
-            execution_process(parse_llm_output(response))
+            if not debug:
+                execution_process(parse_llm_output(response))
             inputs = []
             print("Operation finished. Waiting for the next request...")
             logging.info("-----Request End-----")
