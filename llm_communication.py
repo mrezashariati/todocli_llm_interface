@@ -63,7 +63,7 @@ def get_tasks_data():
     )
     for i, match in enumerate(pattern.finditer(tasks_undone_flat_list)):
         id = match.group(1)
-        tasks_data[id]["row_number"] = i
+        tasks_data[id]["sort_by"] = i
         tasks_data[id]["priority"] = match.group(3)
         tasks_data[id]["context"] = match.group(4)
         tasks_data[id]["title"] = match.group(2).strip()
@@ -622,7 +622,7 @@ if __name__ == "__main__":
     print(
         """Prompt (
         start operation: gg,
-        exit: exit()
+        exit: exit
     ): """
     )
     while True:

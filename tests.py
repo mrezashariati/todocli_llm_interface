@@ -33,11 +33,11 @@ def setup_testing_env():
     todo_add(title="Write Diary", context="personal", priority=2)  # ID:6
     todo_add(title="cleaning", context="home", priority=5)  # ID:7
     todo_add(title="water the pots", context="home", priority=3)  # ID:8
-    todo_add(title="bananas", context="shoppinglist", priority=1)  # ID:b
-    todo_add(title="apples", context="shoppinglist", priority=1)  # ID:c
-    todo_add(title="Deutsch Schreiben", context="homework", priority=1)  # ID:d
-    todo_add(title="Apply", context="work", priority=3)  # ID:e
-    todo_add(title="washing the dishes", context="home", priority=5)  # ID:f
+    todo_add(title="bananas", context="shoppinglist", priority=1)  # ID:9
+    todo_add(title="apples", context="shoppinglist", priority=1)  # ID:a
+    todo_add(title="Deutsch Schreiben", context="homework", priority=1)  # ID:b
+    todo_add(title="Apply", context="work", priority=3)  # ID:c
+    todo_add(title="washing the dishes", context="home", priority=5)  # ID:d
 
     # todo_add(title="Planning", context="work", priority=3)
     # todo_add(title="Write Test", context="work", priority=4)
