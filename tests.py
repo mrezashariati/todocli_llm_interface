@@ -1,14 +1,14 @@
 import unittest
 from unittest.mock import patch, call
 import llm_communication
+from llm_communication import logging
 from llm_communication import (
     todo_add,
-    todo_list,
+    todo_mark_as_done,
     reset_todocli,
     llama_generate,
     execution_process,
     parse_llm_output,
-    process_bash_output,
     get_tasks_data,
 )
 from itertools import permutations
@@ -340,7 +340,7 @@ instruction: Mark the first and third items on my 'work' context as done."""
             response = llama_generate(FULL_PROMPT, AWS_API_KEY)
             execution_process(parse_llm_output(response))
             # Assertion
-            ids = ["4", "e"]
+            ids = ["5", "c"]
             perms = [" ".join([str(j) for j in i]) for i in list(permutations(ids))]
             perms = [f"todo done {i}" for i in perms]
             perms_exist = [
@@ -348,6 +348,86 @@ instruction: Mark the first and third items on my 'work' context as done."""
                 for i in perms
             ]
             assert reduce(lambda a, b: a or b, perms_exist)
+
+    def test_portfolio_case_1(self):
+
+        reset_todocli()
+        todo_add(title="LLM Homework", context="homework_list")  # ID:1
+        todo_add(title="NLP Homework", context="homework_list")  # ID:2
+        todo_add(title="Math Homework", context="homework_list")  # ID:3
+        todo_add(title="ML Homework", context="homework_list")  # ID:4
+
+        with patch(
+            "llm_communication.log_and_exec_process",
+            wraps=llm_communication.log_and_exec_process,
+        ) as mock_log_and_exec_process:
+            USER_PROMPT = f"""
+here is the list of my current tasks in JSON format:
+{get_tasks_data()}
+instruction: Mark the first and third items on my homework_list as done"""
+            FULL_PROMPT = BASE_PROMPT + f"\nUSER: {USER_PROMPT}\n"
+            response = llama_generate(FULL_PROMPT, AWS_API_KEY)
+            execution_process(parse_llm_output(response))
+            # Assertion
+            ids = [1, 3]
+            perms = [" ".join([str(j) for j in i]) for i in list(permutations(ids))]
+            perms = [f"todo done {i}" for i in perms]
+            perms_exist = [
+                call(i, "todo_mark_as_done") in mock_log_and_exec_process.mock_calls
+                for i in perms
+            ]
+            assert reduce(lambda a, b: a or b, perms_exist)
+
+    def test_portfolio_case_2(self):
+        reset_todocli()
+        todo_add(title="Two bottles of milk", context="shopping_list")  # ID:1
+        todo_add(title="Three cans of SinaCola", context="shopping_list")  # ID:2
+        todo_add(title="Fifty eggs", context="shopping_list")  # ID:3
+
+        with patch(
+            "llm_communication.log_and_exec_process",
+            wraps=llm_communication.log_and_exec_process,
+        ) as mock_log_and_exec_process:
+            USER_PROMPT = f"""
+here is the list of my current tasks in JSON format:
+{get_tasks_data()}
+instruction: Prioritize the first item in my shopping list"""
+            FULL_PROMPT = BASE_PROMPT + f"\nUSER: {USER_PROMPT}\n"
+            response = llama_generate(FULL_PROMPT, AWS_API_KEY)
+            execution_process(parse_llm_output(response))
+            # Assertion
+            mock_log_and_exec_process.assert_any_call(
+                "todo task 1 --priority 5", "todo_task"
+            )
+
+    def test_portfolio_case_3(self):
+        reset_todocli()
+        todo_add(title="NLP Project", context="project_list")  # ID:1
+        todo_add(title="Math Project", context="project_list")  # ID:2
+        todo_add(title="ML Project", context="project_list")  # ID:3
+        todo_add(title="Algebra I Project", context="archive_list")  # ID:3
+        todo_mark_as_done([1, 2])
+
+        with patch(
+            "llm_communication.log_and_exec_process",
+            wraps=llm_communication.log_and_exec_process,
+        ) as mock_log_and_exec_process:
+            USER_PROMPT = f"""
+here is the list of my current tasks in JSON format:
+{get_tasks_data()}
+instruction: Move all completed tasks from my project_list to an archive_list"""
+            logging.info(f"\nuser prompt:\n-----{USER_PROMPT}\n-----")
+            FULL_PROMPT = BASE_PROMPT + f"\nUSER: {USER_PROMPT}\n"
+            response = llama_generate(FULL_PROMPT, AWS_API_KEY)
+            execution_process(parse_llm_output(response))
+            # Assertion
+            mock_log_and_exec_process.assert_has_calls(
+                calls=[
+                    call('todo task 1 --context "archive_list"', "todo_task"),
+                    call('todo task 2 --context "archive_list"', "todo_task"),
+                ],
+                any_order=True,
+            )
 
 
 if __name__ == "__main__":

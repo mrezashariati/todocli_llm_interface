@@ -52,21 +52,27 @@ def log_and_exec_process(command, func_name):
 
 def get_tasks_data():
     tasks_data = defaultdict(dict)
-    tasks_undone_flat_list = todo_list(flat=True)
+    tasks_flat_list = ""
+    temp_str = todo_search("", is_done=False)
+    if temp_str:
+        tasks_flat_list += temp_str
+    temp_str = todo_search("", is_done=True)
+    if temp_str:
+        tasks_flat_list += temp_str
     tasks_history = todo_history()
 
     # Parse todo --flat output
     pattern = re.compile(
         # r"^\s(\w+)\s+\|\s+([^★#]+)(?:★(\d+))?\s?(?:#(\w+))?",
-        r"^\s(\w+)\s+\|\s+([^★#\U0000231b]+)(?:\U0000231b[^★#]+)?(?:★(\d+))?\s?(?:#(\w+))?",
+        r"^\s(\w+)\s+\|\s+(\[DONE\])?([^★#\U0000231b]+)(?:\U0000231b[^★#]+)?(?:★(\d+))?\s?(?:#(\w+))?",
         re.MULTILINE,
     )
-    for i, match in enumerate(pattern.finditer(tasks_undone_flat_list)):
+    for i, match in enumerate(pattern.finditer(tasks_flat_list)):
         id = match.group(1)
         tasks_data[id]["sort_by"] = i
-        tasks_data[id]["priority"] = match.group(3)
-        tasks_data[id]["context"] = match.group(4)
-        tasks_data[id]["title"] = match.group(2).strip()
+        tasks_data[id]["priority"] = match.group(4)
+        tasks_data[id]["context"] = match.group(5)
+        tasks_data[id]["title"] = match.group(3).strip()
 
     # Parse todo --history output
     lines = tasks_history.strip().split("\n")
@@ -94,8 +100,8 @@ def get_tasks_data():
             tasks_data[id]["status"] = line[
                 field_bounds[4][0] : field_bounds[4][1]
             ].strip()
-        else:
-            tasks_data[id]["status"] = ""
+        if not tasks_data[id]["status"]:
+            tasks_data[id]["status"] = "UNDONE"
 
     # Format the result
     tasks_data = [{"id": key, **value} for key, value in tasks_data.items()]
@@ -508,7 +514,7 @@ def execution_process(queue):
         output = func(**func_params)
 
 
-def llama_generate(prompt, api_token, max_gen_len=512, temperature=0.2, top_p=0.9):
+def llama_generate(prompt, api_token, max_gen_len=284, temperature=0.2, top_p=0.9):
     global aws_api_quota_remaining
     url = "https://6xtdhvodk2.execute-api.us-west-2.amazonaws.com/dsa_llm/generate"
     body = {
@@ -543,18 +549,14 @@ def string_matcher(list_a, list_b):
 
 
 def get_task_id(task_name):
+    # TODO: change it to use get_tasks_data()
     # Fetch the ID of the corresponding task_name
     ## if task_name is identical to an ID, it is treated as an ID, else I'll search the task names for it.
     task_name = str(task_name)
 
-    task_list = list(
-        filter(lambda x: x, process_bash_output(todo_list(flat=True)).split("\n"))
+    ids, names = zip(
+        *[(task["id"], task["title"]) for task in json.loads(get_tasks_data())]
     )
-    task_list = [
-        ((e.split("|")[0]).strip(), (e.split("|")[1]).strip()) for e in task_list
-    ]
-
-    ids, names = zip(*task_list)
 
     if task_name in ids:
         return task_name
@@ -564,7 +566,7 @@ def get_task_id(task_name):
         logging.info("multiple tasks found!")
         return False
     elif len(found_names) == 0:
-        logging.info(f"no tasks found including {task_name}!")
+        logging.info(f"no tasks found searching for {task_name}!")
         return False
     else:
         return ids[names.index(found_names[0])].strip()
@@ -638,9 +640,6 @@ here is the list of my current tasks in JSON format:
 instruction: """ + "\n".join(
                 inputs
             )
-            if not USER_PROMPT:
-                print.info("Empty prompt. exiting...")
-                break
             logging.info(f"\nuser prompt:\n-----{USER_PROMPT}\n-----")
             FULL_PROMPT = BASE_PROMPT + f"\nUSER: {USER_PROMPT}\n"
             print("Communicating with LLM...")

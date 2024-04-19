@@ -51,14 +51,11 @@ def todo_task(
     front,
 ):
     Edit the specified task with the given options. You can use this funciton for:
-    * renaming the tasks
-    * changing the deadline of the task
-    * changing the start of the task
-    * changing the context of the task
-    * changing the priority of the task
-    * changing the dependencies of the task
-    * changing the period and recurrence of the task
-    * changing whether the task should always appear on the main todo listing or not.
+    * Renaming the tasks
+    * Changing the deadline of the task
+    * Changing the start of the task
+    * Move the task to a new context by setting it's context option.
+    * Changing the priority of the task
     Parameters:
         id (str, required): ID of the task to edit.
         deadline (str): New deadline for the task. Defaults to None.
@@ -104,7 +101,7 @@ def todo_ctx(
         visibility (str): New visibility setting for the context. Contexts have a visibility which is either normal or hidden. Hidden contexts aren't shown when using todo on their parent context. However, they still exists and their tasks can be seen as regular contexts by doing todo <context>. Defaults to None.
         name (str): New name for the context. An error is printed if the new name contains a dot or if the destination context already exists. Defaults to None.
 ---
-def todo_mv(ctx1, ctx2):
+def todo_mv(source_ctx, destination_ctx):
     Move all tasks and subcontexts from source context to destination context.
     Parameters:
         source_ctx (str, required): Source context.
@@ -117,12 +114,6 @@ def todo_rmctx(context, force):
         context (str, required): The context to be removed.
         force (bool): Whether to force removal without confirmation. Defaults to True.
 ---
-def todo_location():
-    Print the path of the data directory.
-    Parameters:
-        None
----- end of documentation ----
-
 Only write these function calls in JSON format. The fields include:
     * the function name to call,
     * the function parameters,
@@ -130,6 +121,10 @@ Only write these function calls in JSON format. The fields include:
 
 Do not include any "results" in your response. The commands/functions you write will not be actually executed and no results will be saved.
 Make sure that your JSON response also includes all (required) parameters you found in you <COT> target functions parameters section.
+Tasks have different priorities:
+- priority 1: not prioritized
+- priority 5: prioritized
+- priority 99: max priority
 
 your response should look like this:
 * Writing a chain of thought including the steps needed to carry out the user's request:
