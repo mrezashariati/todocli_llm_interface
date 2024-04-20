@@ -366,7 +366,7 @@ def todo_purge(force=False, before=None):
     log_and_exec_process(command, "todo_purge")
 
 
-def todo_ctx(
+def todo_edit_ctx(
     context, flat=False, tidy=False, priority=None, visibility=None, name=None
 ):
     """
@@ -393,7 +393,7 @@ def todo_ctx(
     if name:
         command += f" --name '{name}'"
 
-    log_and_exec_process(command, "todo_ctx")
+    log_and_exec_process(command, "todo_edit_ctx")
 
 
 def todo_mv(source_ctx, destination_ctx):
@@ -464,7 +464,7 @@ def todo_location():
 functions_dict = {
     "todo_list": todo_list,
     "todo_add": todo_add,
-    "todo_ctx": todo_ctx,
+    "todo_edit_ctx": todo_edit_ctx,
     "todo_mark_as_done": todo_mark_as_done,
     "todo_future": todo_future,
     "todo_history": todo_history,
@@ -514,7 +514,7 @@ def execution_process(queue):
         output = func(**func_params)
 
 
-def llama_generate(prompt, api_token, max_gen_len=512, temperature=0.2, top_p=0.9):
+def llama_generate(prompt, api_token, max_gen_len=1024, temperature=0.2, top_p=0.9):
     global aws_api_quota_remaining
     url = "https://6xtdhvodk2.execute-api.us-west-2.amazonaws.com/dsa_llm/generate"
     body = {
@@ -530,7 +530,6 @@ def llama_generate(prompt, api_token, max_gen_len=512, temperature=0.2, top_p=0.
     with open("./aws_api_quota_remaining", "w") as f:
         f.write(str(aws_api_quota_remaining))
     logging.info(f"ramining AWS API calls: {aws_api_quota_remaining}")
-
     result = json.loads(res.text)["body"]["generation"]
     logging.info(
         f"Raw LLM response:\n----------\n{result}\n----------",

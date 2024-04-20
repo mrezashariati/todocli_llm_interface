@@ -89,7 +89,7 @@ def todo_ping(ids, required):
     Parameters:
         ids (list of str): List of task IDs to ping.
 ---
-def todo_ctx(
+def todo_edit_ctx(
     context, flat, tidy, priority, visibility, name
 ):
     Manipulate an already existant context. Does not create a new context.
@@ -113,11 +113,13 @@ Only write these function calls in JSON format. The fields include:
     * the function parameters,
     * a log message expressing briefly your reasoning and steps which led you to that particular function call.
 
+I know that there is not need to create or add a context. I will never use todo_edit_ctx for adding or creating a new context. It will be created automatically just by adding tasks to it or moving new tasks to it. I will skip the creating new context step.
 Do not include any "results" in your response. The commands/functions you write will not be actually executed and no results will be saved.
 Make sure that your JSON response also includes all (required) parameters you found in you <COT> target functions parameters section.
 Tasks have different priorities:
 - priority 1: not prioritized
 - priority 5: prioritized
+- priority 90 or higher: high-importance
 - priority 99: max priority
 
 your response should look like this:

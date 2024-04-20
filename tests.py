@@ -46,6 +46,24 @@ def setup_testing_env():
 
 
 class TestLLMCommunication(unittest.TestCase):
+    # def test_todo_move_from_ctx_to_ctx(self):
+    #         setup_testing_env()
+    #         with patch(
+    #             "llm_communication.log_and_exec_process",
+    #             wraps=llm_communication.log_and_exec_process,
+    #         ) as mock_log_and_exec_process:
+    #             USER_PROMPT = f"""
+    # here is the list of my current tasks in JSON format:
+    # {get_tasks_data()}
+    # instruction: can you move the items in study context to homework context?"""
+    #             FULL_PROMPT = BASE_PROMPT + f"\nUSER: {USER_PROMPT}\n"
+    #             response = llama_generate(FULL_PROMPT, AWS_API_KEY)
+    #             execution_process(parse_llm_output(response))
+    #             # Assertion
+    #             mock_log_and_exec_process.assert_any_call(
+    #                 """todo mv 'study' 'homework'""", "todo_mv"
+    #             )
+
     def test_todo_rm_single_task(self):
         setup_testing_env()
         with patch(
@@ -125,25 +143,6 @@ instruction: can you list my items in games list?"""
             execution_process(parse_llm_output(response))
             # Assertion
             mock_log_and_exec_process.assert_any_call("""todo \"games\"""", "todo")
-
-    def test_todo_move_from_ctx_to_ctx(self):
-        #         setup_testing_env()
-        #         with patch(
-        #             "llm_communication.log_and_exec_process",
-        #             wraps=llm_communication.log_and_exec_process,
-        #         ) as mock_log_and_exec_process:
-        #             USER_PROMPT = f"""
-        # here is the list of my current tasks in JSON format:
-        # {get_tasks_data()}
-        # instruction: can you move the items in study context to homework context?"""
-        #             FULL_PROMPT = BASE_PROMPT + f"\nUSER: {USER_PROMPT}\n"
-        #             response = llama_generate(FULL_PROMPT, AWS_API_KEY)
-        #             execution_process(parse_llm_output(response))
-        #             # Assertion
-        #             mock_log_and_exec_process.assert_any_call(
-        #                 """todo mv 'study' 'homework'""", "todo_mv"
-        #             )
-        pass
 
     def test_todo_task_rename_single_task(self):
         setup_testing_env()
@@ -462,6 +461,36 @@ instruction: Prioritize all tasks that have to do with my studies"""
 
     def test_portfolio_case_5(self):
         reset_todocli()
+        todo_add(title="Write these tests", context="work_list")  # ID:1
+        todo_add(title="Write more tests", context="work_list")  # ID:2
+        todo_add(title="Hang out with friends", context="personal_list")  # ID:3
+        todo_add(title="Go to the dentist", context="personal_list")  # ID:4
+
+        with patch(
+            "llm_communication.log_and_exec_process",
+            wraps=llm_communication.log_and_exec_process,
+        ) as mock_log_and_exec_process:
+            USER_PROMPT = f"""
+here is the list of my current tasks in JSON format:
+{get_tasks_data()}
+instruction: Merge my work_list and personal_list together into a combined_list"""
+            logging.info(f"\nuser prompt:\n-----{USER_PROMPT}\n-----")
+            FULL_PROMPT = BASE_PROMPT + f"\nUSER: {USER_PROMPT}\n"
+            response = llama_generate(FULL_PROMPT, AWS_API_KEY)
+            execution_process(parse_llm_output(response))
+            # Assertion
+            mock_log_and_exec_process.assert_has_calls(
+                [
+                    call('todo task 4 --context "combined_list"', "todo_task"),
+                    call('todo task 3 --context "combined_list"', "todo_task"),
+                    call('todo task 2 --context "combined_list"', "todo_task"),
+                    call('todo task 1 --context "combined_list"', "todo_task"),
+                ],
+                any_order=True,
+            )
+
+    def test_portfolio_case_6(self):
+        reset_todocli()
         todo_add(title="Matrix Calculus", context="study_list")  # ID:1
         todo_add(title="Convex Optimization", context="study_list")  # ID:2
         todo_add(title="Differential Equations", context="study_list")  # ID:3
@@ -491,9 +520,6 @@ instruction: Set all items in my study_list to maximum importance"""
                 ],
                 any_order=True,
             )
-
-    def test_portfolio_case_6(self):
-        pass
 
     def test_portfolio_case_7(self):
         reset_todocli()
@@ -592,6 +618,81 @@ instruction: Prepare for the team meeting by moving all high priority tasks to t
                 in mock_log_and_exec_process.mock_calls
                 or call(
                     'todo task 7 --context "meeting_agenda_list" --priority 9 --front true',
+                    "todo_task",
+                )
+                in mock_log_and_exec_process.mock_calls
+            )
+
+    def test_portfolio_case_8(self):
+        reset_todocli()
+        todo_add(title="Go swimming", context="priorities_list")  # ID:1
+        todo_add(
+            title="Complete project proposal for client X",
+            context="task_list",
+            priority=99,
+        )  # ID:2
+        todo_add(
+            title="Respond to emails from stakeholders",
+            context="task_list",
+            priority=99,
+        )  # ID:3
+        todo_add(
+            title="Schedule follow-up meetings with collaborators",
+            context="task_list",
+            priority=90,
+        )  # ID:4
+        todo_add(
+            title="Go to China and see the great wall",
+            context="travel_list",
+            priority=90,
+        )  # ID:5
+        todo_add(title="Fly to Paris", context="travel_list", priority=90)  # ID:6
+
+        with patch(
+            "llm_communication.log_and_exec_process",
+            wraps=llm_communication.log_and_exec_process,
+        ) as mock_log_and_exec_process:
+            USER_PROMPT = f"""
+here is the list of my current tasks in JSON format:
+{get_tasks_data()}
+instruction: Move all high-importance items from my task_list to my priorities_list"""
+            logging.info(f"\nuser prompt:\n-----{USER_PROMPT}\n-----")
+            FULL_PROMPT = BASE_PROMPT + f"\nUSER: {USER_PROMPT}\n"
+            response = llama_generate(FULL_PROMPT, AWS_API_KEY)
+            execution_process(parse_llm_output(response))
+            # Assertion
+            assert (
+                call(
+                    'todo task 2 --context "priorities_list" --priority 99',
+                    "todo_task",
+                )
+                in mock_log_and_exec_process.mock_calls
+                or call(
+                    'todo task 2 --context "priorities_list"',
+                    "todo_task",
+                )
+                in mock_log_and_exec_process.mock_calls
+            )
+            assert (
+                call(
+                    'todo task 3 --context "priorities_list" --priority 99',
+                    "todo_task",
+                )
+                in mock_log_and_exec_process.mock_calls
+                or call(
+                    'todo task 3 --context "priorities_list"',
+                    "todo_task",
+                )
+                in mock_log_and_exec_process.mock_calls
+            )
+            assert (
+                call(
+                    'todo task 4 --context "priorities_list" --priority 90',
+                    "todo_task",
+                )
+                in mock_log_and_exec_process.mock_calls
+                or call(
+                    'todo task 4 --context "priorities_list"',
                     "todo_task",
                 )
                 in mock_log_and_exec_process.mock_calls
