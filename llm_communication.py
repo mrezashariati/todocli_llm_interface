@@ -514,7 +514,7 @@ def execution_process(queue):
         output = func(**func_params)
 
 
-def llama_generate(prompt, api_token, max_gen_len=284, temperature=0.2, top_p=0.9):
+def llama_generate(prompt, api_token, max_gen_len=512, temperature=0.2, top_p=0.9):
     global aws_api_quota_remaining
     url = "https://6xtdhvodk2.execute-api.us-west-2.amazonaws.com/dsa_llm/generate"
     body = {

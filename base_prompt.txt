@@ -101,12 +101,6 @@ def todo_ctx(
         visibility (str): New visibility setting for the context. Contexts have a visibility which is either normal or hidden. Hidden contexts aren't shown when using todo on their parent context. However, they still exists and their tasks can be seen as regular contexts by doing todo <context>. Defaults to None.
         name (str): New name for the context. An error is printed if the new name contains a dot or if the destination context already exists. Defaults to None.
 ---
-def todo_mv(source_ctx, destination_ctx):
-    Move all tasks and subcontexts from source context to destination context.
-    Parameters:
-        source_ctx (str, required): Source context.
-        destination_ctx (str, required): Destination context.
----
 def todo_rmctx(context, force):
     Remove a whole context and its contents recursively. This way you do not need to remove tasks one by one. 
     When aiming to remove a context, this is the right function.
