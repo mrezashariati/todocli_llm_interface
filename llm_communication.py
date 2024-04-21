@@ -9,6 +9,7 @@ import numpy as np
 import inspect
 import re
 from collections import defaultdict
+import time
 
 logging.basicConfig(
     level=logging.INFO,
@@ -482,8 +483,11 @@ functions_dict = {
 def parse_llm_output(text):
     global functions_dict
     execution_queue = []
-
-    processed = text.split("<JSON>")[1].split("<JSON/>")[0].strip()
+    try:
+        processed = text.split("<JSON>")[1].split("</JSON>")[0].strip()
+    except Exception as e:
+        logging.info("Bad LLM response structure. Doing nothing")
+        return execution_queue
 
     # correct some common mistakes in json formatting
     # Replace 'True' with 'true' and 'False' with 'false'
@@ -509,12 +513,15 @@ def parse_llm_output(text):
 
 # TODO: communication between functions needed. Can use stack.
 def execution_process(queue):
-    for func, func_params, log in queue:
-        logging.info(log)
-        output = func(**func_params)
+    if queue:
+        for func, func_params, log in queue:
+            logging.info(log)
+            output = func(**func_params)
 
 
-def llama_generate(prompt, api_token, max_gen_len=1024, temperature=0.2, top_p=0.9):
+def llama_generate(
+    prompt, api_token, max_gen_len=1024, temperature=0.2, top_p=0.9, retries=3
+):
     global aws_api_quota_remaining
     url = "https://6xtdhvodk2.execute-api.us-west-2.amazonaws.com/dsa_llm/generate"
     body = {
@@ -524,17 +531,33 @@ def llama_generate(prompt, api_token, max_gen_len=1024, temperature=0.2, top_p=0
         "top_p": top_p,
         "api_token": api_token,
     }
-    res = requests.post(url, json=body)
+    result = ""
+    for i in range(retries):
+        try:
+            res = requests.post(url, json=body, timeout=20)
+        except requests.exceptions.Timeout as e:
+            logging.info(f"LLM response timeout")
+            time.sleep(5)
+            continue
 
-    aws_api_quota_remaining -= 1
-    with open("./aws_api_quota_remaining", "w") as f:
-        f.write(str(aws_api_quota_remaining))
-    logging.info(f"ramining AWS API calls: {aws_api_quota_remaining}")
-    result = json.loads(res.text)["body"]["generation"]
-    logging.info(
-        f"Raw LLM response:\n----------\n{result}\n----------",
-    )
-    return result
+        aws_api_quota_remaining -= 1
+        with open("./aws_api_quota_remaining", "w") as f:
+            f.write(str(aws_api_quota_remaining))
+        logging.info(f"ramining AWS API calls: {aws_api_quota_remaining}")
+        try:
+            result = json.loads(res.text)["body"]["generation"]
+            break
+        except KeyError:
+            logging.info(f"LLM response is empty. The response text:\n{res.text}")
+            time.sleep(5)
+
+    if result:
+        logging.info(
+            f"Raw LLM response:\n----------\n{result}\n----------",
+        )
+        return result
+    else:
+        raise Exception("Failed to get response from LLM")
 
 
 def string_matcher(list_a, list_b):
@@ -548,7 +571,6 @@ def string_matcher(list_a, list_b):
 
 
 def get_task_id(task_name):
-    # TODO: change it to use get_tasks_data()
     # Fetch the ID of the corresponding task_name
     ## if task_name is identical to an ID, it is treated as an ID, else I'll search the task names for it.
     task_name = str(task_name)

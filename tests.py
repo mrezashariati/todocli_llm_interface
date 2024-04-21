@@ -159,7 +159,7 @@ instruction: can you change the name of "elden ring" to "elden lord"? """
             execution_process(parse_llm_output(response))
             # Assertion
             mock_log_and_exec_process.assert_any_call(
-                """todo task 1 --title \"Elden Lord\"""", "todo_task"
+                'todo task 1 --title "elden lord"', "todo_task"
             )
 
     def test_todo_task_change_priority_single_task(self):
@@ -322,8 +322,17 @@ instruction: I am looking for undone tasks having study in them. can you do that
             response = llama_generate(FULL_PROMPT, AWS_API_KEY)
             execution_process(parse_llm_output(response))
             # Assertion
-            mock_log_and_exec_process.assert_any_call(
-                "todo search 'study' --undone", "todo_search"
+            assert (
+                call(
+                    "todo search 'study' --undone",
+                    "todo_search",
+                )
+                in mock_log_and_exec_process.mock_calls
+                or call(
+                    "todo search 'study' --undone --case",
+                    "todo_search",
+                )
+                in mock_log_and_exec_process.mock_calls
             )
 
     def test_todo_done_based_on_order(self):
@@ -696,6 +705,55 @@ instruction: Move all high-importance items from my task_list to my priorities_l
                     "todo_task",
                 )
                 in mock_log_and_exec_process.mock_calls
+            )
+
+    def test_irrelevant_command_1(self):
+        setup_testing_env()
+        with patch(
+            "llm_communication.log_and_exec_process",
+            wraps=llm_communication.log_and_exec_process,
+        ) as mock_log_and_exec_process:
+            USER_PROMPT = f"""
+here is the list of my current tasks in JSON format:
+{get_tasks_data()}
+instruction: can you tell me the capital of US in plain text?"""
+            logging.info(f"\nuser prompt:\n-----{USER_PROMPT}\n-----")
+            FULL_PROMPT = BASE_PROMPT + f"\nUSER: {USER_PROMPT}\n"
+            response = llama_generate(FULL_PROMPT, AWS_API_KEY)
+            execution_process(parse_llm_output(response))
+            # Assertion
+            ## Checking for 'Doing nothing':
+            assert mock_log_and_exec_process.mock_calls == [
+                call("todo search '' --undone", "todo_search"),
+                call("todo search '' --done", "todo_search"),
+                call("todo history", "todo_history"),
+            ]
+
+    def test_irrelevant_command_2(self):
+        setup_testing_env()
+        with patch(
+            "llm_communication.log_and_exec_process",
+            wraps=llm_communication.log_and_exec_process,
+        ) as mock_log_and_exec_process:
+            USER_PROMPT = f"""
+here is the list of my current tasks in JSON format:
+{get_tasks_data()}
+instruction: what is the meaning of life? tell me I desperately need it."""
+            logging.info(f"\nuser prompt:\n-----{USER_PROMPT}\n-----")
+            FULL_PROMPT = BASE_PROMPT + f"\nUSER: {USER_PROMPT}\n"
+            response = llama_generate(FULL_PROMPT, AWS_API_KEY)
+            execution_process(parse_llm_output(response))
+            # Assertion
+            ## Checking for 'Doing nothing':
+            assert set(mock_log_and_exec_process.mock_calls).issubset(
+                set(
+                    [
+                        call("todo search '' --undone", "todo_search"),
+                        call("todo search '' --done", "todo_search"),
+                        call("todo history", "todo_history"),
+                        call["todo search 'US' --undone --case", "todo_search"],
+                    ]
+                )
             )
 
 

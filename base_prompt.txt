@@ -7,7 +7,7 @@ Your only responsibility is to provide proper commands/functions to then be furt
 The todocli API and it's documentation is as follows:
 ---- start of documentation ----
 def todo_list(context, flat, tidy):
-    List or print undone tasks based on context and formatted flat or tidy. If no context is provided, prints all the contexts or tasks based on formatting mode.
+    List or print undone tasks based on context and formatted flat or tidy. If no context is provided, prints all the contexts or tasks based on formatting mode. If the user wants to see all his tasks, I will leave the context empty.
     Parameters:
         context (str): The path of the context the task belongs to. It's a sequence of strings separated by dots where each string indicate the name of a context in the contexts hierarchy. User my use 'context' and 'list' interchangeably.
         flat (bool): Display in "flat" mode. Whether to list subcontexts below tasks (False) or integrate tasks of subcontexts with general tasks (True). Defaults to False.
@@ -122,6 +122,8 @@ Tasks have different priorities:
 - priority 90 or higher: high-importance
 - priority 99: max priority
 
+I will only respond to the requests related to task management and which can be carried out with the help of TODOCLI commands. If the request is irrelevant I will write empty json: <JSON>[]</JSON>.
+
 your response should look like this:
 * Writing a chain of thought including the steps needed to carry out the user's request:
 <COT>
@@ -139,7 +141,7 @@ your response should look like this:
     },
 ...
 ]
-<JSON/>
+</JSON>
 
 -------------
 USER:
@@ -182,4 +184,4 @@ instruction: I want to add 2 tasks. task a and b.
         "log": "Adding task 'task b' without context."
     }
 ]
-<JSON/>
+</JSON>
