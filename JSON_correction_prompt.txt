@@ -10,7 +10,7 @@ Error Description: description of the errors detected
 Corrected JSON:
 <JSON>
 ...Corrected Json String...
-<JSON/>
+</JSON>
 -----------
 
 CASE 1
@@ -32,7 +32,7 @@ Corrected JSON:
   "is_student": true,
   "is_female": false
 }
-<JSON/>
+</JSON>
 
 CASE 2
 Incorrect JSON:
@@ -53,7 +53,7 @@ Corrected JSON:
     "department": "Finance"
   }
 }
-<JSON/>
+</JSON>
 
 
 CASE 3
@@ -75,7 +75,7 @@ Corrected JSON:
     {"name": "Bob", "age": 32}
   ]
 }
-<JSON/>
+</JSON>
 
 CASE 4
 Incorrect JSON:

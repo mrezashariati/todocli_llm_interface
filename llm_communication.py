@@ -8,6 +8,8 @@ from difflib import SequenceMatcher
 import numpy as np
 import inspect
 import re
+from collections import defaultdict
+import time
 
 logging.basicConfig(
     level=logging.INFO,
@@ -49,7 +51,65 @@ def log_and_exec_process(command, func_name):
         return output
 
 
-def todo(context="", flat=False, tidy=False):
+def get_tasks_data():
+    tasks_data = defaultdict(dict)
+    tasks_flat_list = ""
+    temp_str = todo_search("", is_done=False)
+    if temp_str:
+        tasks_flat_list += temp_str
+    temp_str = todo_search("", is_done=True)
+    if temp_str:
+        tasks_flat_list += temp_str
+    tasks_history = todo_history()
+
+    # Parse todo --flat output
+    pattern = re.compile(
+        # r"^\s(\w+)\s+\|\s+([^★#]+)(?:★(\d+))?\s?(?:#(\w+))?",
+        r"^\s(\w+)\s+\|\s+(\[DONE\])?([^★#\U0000231b]+)(?:\U0000231b[^★#]+)?(?:★(\d+))?\s?(?:#(\w+))?",
+        re.MULTILINE,
+    )
+    for i, match in enumerate(pattern.finditer(tasks_flat_list)):
+        id = match.group(1)
+        tasks_data[id]["sort_by"] = i
+        tasks_data[id]["priority"] = match.group(4)
+        tasks_data[id]["context"] = match.group(5)
+        tasks_data[id]["title"] = match.group(3).strip()
+
+    # Parse todo --history output
+    lines = tasks_history.strip().split("\n")
+    header_line = lines[1]  ## This line contains the dashes under the headers
+    ## Find all start and end indices of '-' sections to determine column boundaries
+    field_bounds = []
+    last_pos = 0
+    while True:
+        start = header_line.find("-", last_pos)
+        if start == -1:
+            break
+        end = header_line.find(" ", start)
+        if end == -1:
+            end = len(header_line)
+        field_bounds.append((start, end))
+        last_pos = end
+
+    ## Parse each data line using the detected field boundaries
+    for line in lines[2:]:  # Skip headers and dashes line
+        id = line[field_bounds[0][0] : field_bounds[0][1]].strip()
+        # tasks_data[id]["created"] = line[
+        #     field_bounds[2][0] : field_bounds[2][1]
+        # ].strip()
+        if len(field_bounds) > 4:
+            tasks_data[id]["status"] = line[
+                field_bounds[4][0] : field_bounds[4][1]
+            ].strip()
+        if not tasks_data[id]["status"]:
+            tasks_data[id]["status"] = "UNDONE"
+
+    # Format the result
+    tasks_data = [{"id": key, **value} for key, value in tasks_data.items()]
+    return json.dumps(tasks_data)
+
+
+def todo_list(context="", flat=False, tidy=False):
     """
     Print the list of the tasks based on the context and formatted flat or tidy.
 
@@ -307,7 +367,7 @@ def todo_purge(force=False, before=None):
     log_and_exec_process(command, "todo_purge")
 
 
-def todo_ctx(
+def todo_edit_ctx(
     context, flat=False, tidy=False, priority=None, visibility=None, name=None
 ):
     """
@@ -334,7 +394,7 @@ def todo_ctx(
     if name:
         command += f" --name '{name}'"
 
-    log_and_exec_process(command, "todo_ctx")
+    log_and_exec_process(command, "todo_edit_ctx")
 
 
 def todo_mv(source_ctx, destination_ctx):
@@ -403,9 +463,9 @@ def todo_location():
 
 
 functions_dict = {
-    "todo": todo,
+    "todo_list": todo_list,
     "todo_add": todo_add,
-    "todo_ctx": todo_ctx,
+    "todo_edit_ctx": todo_edit_ctx,
     "todo_mark_as_done": todo_mark_as_done,
     "todo_future": todo_future,
     "todo_history": todo_history,
@@ -423,8 +483,11 @@ functions_dict = {
 def parse_llm_output(text):
     global functions_dict
     execution_queue = []
-
-    processed = text.split("<JSON>")[1].split("<JSON/>")[0].strip()
+    try:
+        processed = text.split("<JSON>")[1].split("</JSON>")[0].strip()
+    except Exception as e:
+        logging.info("Bad LLM response structure. Doing nothing")
+        return execution_queue
 
     # correct some common mistakes in json formatting
     # Replace 'True' with 'true' and 'False' with 'false'
@@ -450,12 +513,15 @@ def parse_llm_output(text):
 
 # TODO: communication between functions needed. Can use stack.
 def execution_process(queue):
-    for func, func_params, log in queue:
-        logging.info(log)
-        output = func(**func_params)
+    if queue:
+        for func, func_params, log in queue:
+            logging.info(log)
+            output = func(**func_params)
 
 
-def llama_generate(prompt, api_token, max_gen_len=320, temperature=0.2, top_p=0.9):
+def llama_generate(
+    prompt, api_token, max_gen_len=1024, temperature=0.2, top_p=0.9, retries=3
+):
     global aws_api_quota_remaining
     url = "https://6xtdhvodk2.execute-api.us-west-2.amazonaws.com/dsa_llm/generate"
     body = {
@@ -465,17 +531,33 @@ def llama_generate(prompt, api_token, max_gen_len=320, temperature=0.2, top_p=0.
         "top_p": top_p,
         "api_token": api_token,
     }
-    res = requests.post(url, json=body)
+    result = ""
+    for i in range(retries):
+        try:
+            res = requests.post(url, json=body, timeout=20)
+        except requests.exceptions.Timeout as e:
+            logging.info(f"LLM response timeout")
+            time.sleep(5)
+            continue
 
-    aws_api_quota_remaining -= 1
-    with open("./aws_api_quota_remaining", "w") as f:
-        f.write(str(aws_api_quota_remaining))
-    logging.info(f"ramining AWS API calls: {aws_api_quota_remaining}")
-    result = json.loads(res.text)["body"]["generation"]
-    logging.info(
-        f"Raw LLM response:\n----------\n{result}\n----------",
-    )
-    return result
+        aws_api_quota_remaining -= 1
+        with open("./aws_api_quota_remaining", "w") as f:
+            f.write(str(aws_api_quota_remaining))
+        logging.info(f"ramining AWS API calls: {aws_api_quota_remaining}")
+        try:
+            result = json.loads(res.text)["body"]["generation"]
+            break
+        except KeyError:
+            logging.info(f"LLM response is empty. The response text:\n{res.text}")
+            time.sleep(5)
+
+    if result:
+        logging.info(
+            f"Raw LLM response:\n----------\n{result}\n----------",
+        )
+        return result
+    else:
+        raise Exception("Failed to get response from LLM")
 
 
 def string_matcher(list_a, list_b):
@@ -493,14 +575,9 @@ def get_task_id(task_name):
     ## if task_name is identical to an ID, it is treated as an ID, else I'll search the task names for it.
     task_name = str(task_name)
 
-    task_list = list(
-        filter(lambda x: x, process_bash_output(todo(flat=True)).split("\n"))
+    ids, names = zip(
+        *[(task["id"], task["title"]) for task in json.loads(get_tasks_data())]
     )
-    task_list = [
-        ((e.split("|")[0]).strip(), (e.split("|")[1]).strip()) for e in task_list
-    ]
-
-    ids, names = zip(*task_list)
 
     if task_name in ids:
         return task_name
@@ -510,7 +587,7 @@ def get_task_id(task_name):
         logging.info("multiple tasks found!")
         return False
     elif len(found_names) == 0:
-        logging.info(f"no tasks found including {task_name}!")
+        logging.info(f"no tasks found searching for {task_name}!")
         return False
     else:
         return ids[names.index(found_names[0])].strip()
@@ -564,9 +641,8 @@ def query_llm(input_prompt, cleanup=False):
 
     logging.info("-----Request Start-----")
     USER_PROMPT = f"""
-here is the list of my current tasks:
-ID | TaskName ⌛ Deadline ★Priority ,Context
-{process_bash_output(todo(flat=True)).replace("#", ",")}
+here is the list of my current tasks in JSON format:
+{get_tasks_data()}
 instruction: {input_prompt}"""
 
     logging.info(f"\nuser prompt:\n-----{USER_PROMPT}\n-----")
