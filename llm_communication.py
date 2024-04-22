@@ -65,7 +65,7 @@ def get_tasks_data():
     # Parse todo --flat output
     pattern = re.compile(
         # r"^\s(\w+)\s+\|\s+([^★#]+)(?:★(\d+))?\s?(?:#(\w+))?",
-        r"^\s(\w+)\s+\|\s+(\[DONE\])?([^★#\U0000231b]+)(?:\U0000231b[^★#]+)?(?:★(\d+))?\s?(?:#(\w+))?",
+        r"^\s(\w+)\s+\|\s+(\[DONE\])?([^★#\U0000231b\n]+)(?:\U0000231b[^★#]+)?(?:★(\d+))?\s?(?:#(\w+))?",
         re.MULTILINE,
     )
     for i, match in enumerate(pattern.finditer(tasks_flat_list)):
@@ -77,32 +77,33 @@ def get_tasks_data():
 
     # Parse todo --history output
     lines = tasks_history.strip().split("\n")
-    header_line = lines[1]  ## This line contains the dashes under the headers
-    ## Find all start and end indices of '-' sections to determine column boundaries
-    field_bounds = []
-    last_pos = 0
-    while True:
-        start = header_line.find("-", last_pos)
-        if start == -1:
-            break
-        end = header_line.find(" ", start)
-        if end == -1:
-            end = len(header_line)
-        field_bounds.append((start, end))
-        last_pos = end
+    if not lines == ["No history."]:
+        header_line = lines[1]  ## This line contains the dashes under the headers
+        ## Find all start and end indices of '-' sections to determine column boundaries
+        field_bounds = []
+        last_pos = 0
+        while True:
+            start = header_line.find("-", last_pos)
+            if start == -1:
+                break
+            end = header_line.find(" ", start)
+            if end == -1:
+                end = len(header_line)
+            field_bounds.append((start, end))
+            last_pos = end
 
-    ## Parse each data line using the detected field boundaries
-    for line in lines[2:]:  # Skip headers and dashes line
-        id = line[field_bounds[0][0] : field_bounds[0][1]].strip()
-        # tasks_data[id]["created"] = line[
-        #     field_bounds[2][0] : field_bounds[2][1]
-        # ].strip()
-        if len(field_bounds) > 4:
-            tasks_data[id]["status"] = line[
-                field_bounds[4][0] : field_bounds[4][1]
-            ].strip()
-        if not tasks_data[id]["status"]:
-            tasks_data[id]["status"] = "UNDONE"
+        ## Parse each data line using the detected field boundaries
+        for line in lines[2:]:  # Skip headers and dashes line
+            id = line[field_bounds[0][0] : field_bounds[0][1]].strip()
+            # tasks_data[id]["created"] = line[
+            #     field_bounds[2][0] : field_bounds[2][1]
+            # ].strip()
+            if len(field_bounds) > 4:
+                tasks_data[id]["status"] = line[
+                    field_bounds[4][0] : field_bounds[4][1]
+                ].strip()
+            if not tasks_data[id]["status"]:
+                tasks_data[id]["status"] = "UNDONE"
 
     # Format the result
     tasks_data = [{"id": key, **value} for key, value in tasks_data.items()]
@@ -534,7 +535,7 @@ def llama_generate(
     result = ""
     for i in range(retries):
         try:
-            res = requests.post(url, json=body, timeout=20)
+            res = requests.post(url, json=body, timeout=30)
         except requests.exceptions.Timeout as e:
             logging.info(f"LLM response timeout")
             time.sleep(5)
@@ -635,7 +636,7 @@ def standardize_date_format(text):
     return date_pattern.sub(replace_with_standard_format, text)
 
 
-def query_llm(input_prompt, cleanup=False):
+def student_llm(input_prompt, cleanup=False):
     if cleanup:
         reset_todocli()
 
@@ -652,5 +653,5 @@ instruction: {input_prompt}"""
     response = llama_generate(FULL_PROMPT, AWS_API_KEY)
     execution_process(parse_llm_output(response))
     logging.info("-----Request End-----")
-    
+
     return response
