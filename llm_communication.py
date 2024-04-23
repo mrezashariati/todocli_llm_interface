@@ -1,15 +1,22 @@
+from dotenv import load_dotenv
+
+load_dotenv()
 import json
 import subprocess
 import shutil
+import os
 from pathlib import Path
 import logging
 import requests
 from difflib import SequenceMatcher
-import numpy as np
 import inspect
 import re
 from collections import defaultdict
 import time
+
+from openweathermap import OpenWeatherMapAPIWrapper
+from langchain.agents import AgentType, initialize_agent, load_tools
+import numpy as np
 
 logging.basicConfig(
     level=logging.INFO,
@@ -24,8 +31,9 @@ logging.basicConfig(
 with open("./aws_api_quota_remaining", "r") as f:
     aws_api_quota_remaining = int(f.readlines()[0].strip())
 
-with open("./aws_api.key", "r") as f:
-    AWS_API_KEY = f.readlines()[0].strip()
+AWS_API_KEY = os.environ["AWS_API_KEY"]
+OPENWEATHERMAP_API_KEY = os.environ["OPENWEATHERMAP_API_KEY"]
+
 
 with open("./base_prompt.txt", "r") as f:
     BASE_PROMPT = f.read()
@@ -512,7 +520,6 @@ def parse_llm_output(text):
     return execution_queue
 
 
-# TODO: communication between functions needed. Can use stack.
 def execution_process(queue):
     if queue:
         for func, func_params, log in queue:
@@ -641,14 +648,20 @@ def student_llm(input_prompt, cleanup=False):
         reset_todocli()
 
     logging.info("-----Request Start-----")
+    # LangChain preparation
+    ## Prompt
     USER_PROMPT = f"""
 here is the list of my current tasks in JSON format:
 {get_tasks_data()}
 instruction: {input_prompt}"""
-
     logging.info(f"\nuser prompt:\n-----{USER_PROMPT}\n-----")
-
     FULL_PROMPT = BASE_PROMPT + f"\nUSER: {USER_PROMPT}\n"
+
+    ## Tools
+    tools = []
+    agent_chain = initialize_agent(
+        tools=tools, llm=None, agent=AgentType.ZERO_SHOT_REACT_DESCRIPTION, verbose=True
+    )
 
     response = llama_generate(FULL_PROMPT, AWS_API_KEY)
     execution_process(parse_llm_output(response))
