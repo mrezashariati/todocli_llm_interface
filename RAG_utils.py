@@ -13,6 +13,7 @@ from langchain_core.callbacks.manager import CallbackManagerForLLMRun
 from langchain_core.language_models.llms import LLM
 
 import pyowm
+from pyowm.commons.exceptions import NotFoundError
 
 logging.basicConfig(
     level=logging.INFO,
@@ -123,11 +124,21 @@ class OpenWeatherMapAPIWrapper(BaseModel):
             f"Cloud cover: {clouds}%"
         )
 
-    def run(self, loc_date) -> str:
-        """Get the forcasted weather information for a specified location and date. There is only one parameter. The loc_date parameter should be formatted as: location, date. The date part should be formatted like YYYY-MM-DD HH:MM:SS"""
-        location, date = loc_date.split(",")
-        location, date = location.strip(), date.strip()
-        mgr = self.owm.weather_manager()
-        observation = mgr.forecast_at_place(name=location, interval="3h", limit=None)
-        w = observation.get_weather_at(date)
+    def run(self, city_date) -> str:
+        """Get the forcasted weather information for a specified city and date.
+        There is only one parameter. The city_date parameter should be formatted as: CITY WITHOUT COUNTRY, DATE. Nothing more or less. The date part should be formatted like YYYY-MM-DD HH:MM:SS
+        DO NOT EVER INPUT COUNTRY.
+        """
+        try:
+            location, date = city_date.split(",")
+            location, date = location.strip(), date.strip()
+            mgr = self.owm.weather_manager()
+
+            observation = mgr.forecast_at_place(
+                name=location, interval="3h", limit=None
+            )
+            w = observation.get_weather_at(date)
+        except (NotFoundError, ValueError) as e:
+            logging.info(e)
+            return f"Failed to execute. Weather forecast not available."
         return self._format_weather_info(location, date, w)

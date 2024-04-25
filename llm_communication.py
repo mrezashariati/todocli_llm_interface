@@ -653,39 +653,45 @@ def student_llm(input_prompt, cleanup=False):
 
     logging.info("-----Request Start-----")
 
-    ## Tools
+    llm = LLAMA2()
+
+    # Agent with tools such as weather
     tools = [
         Tool(
             name="weather",
             func=OpenWeatherMapAPIWrapper().run,
-            description="""Can be used to get the forecast weather at a particular location and date.""",
+            description="""Can be used to get the forecast weather at a particular CITY and DATE.\
+                  Only use it when an outdoor activity has been mentioned EXPLICITLY in user's task.\
+                      the city and date have to be visibly present and immediately in user's request.\
+                          It is based on your judgement whether an activity belongs to outdoor activities.""",
         ),
     ]
-
-    llm = LLAMA2()
-
     with open("./agent_prompt_template.txt", "r") as f:
         agent_prompt_template = f.read()
     agent_prompt = PromptTemplate.from_template(agent_prompt_template)
-
     agent = create_json_chat_agent(llm, tools, agent_prompt)
-    agent_executor = AgentExecutor(agent=agent, tools=tools, verbose=True)
+    agent_executor = AgentExecutor(
+        agent=agent, tools=tools, verbose=True, handle_parsing_errors=False
+    )
     result = agent_executor.invoke({"input": input_prompt})
-    output = result["output"]
-    print(output)
+    agent_output = result["output"]
 
-#     ## Prompt
-#     USER_PROMPT = f"""
-# here is the list of my current tasks in JSON format:
-# {get_tasks_data()}
-# instruction: {input_prompt}"""
-#     logging.info(f"\nuser prompt:\n-----{USER_PROMPT}\n-----")
-#     FULL_PROMPT = BASE_PROMPT + f"\nUSER: {USER_PROMPT}\n"
-#     execution_process(parse_llm_output(response))
-#     logging.info("-----Request End-----")
+    ## Task Manager
+    USER_PROMPT = (
+        f"weather check result: {agent_output}\n"
+        + "here is the list of my current tasks in JSON format:\n"
+        + f"{get_tasks_data()}\n"
+        + f"instruction: {input_prompt}"
+    )
+    logging.info(f"\nuser prompt:\n-----{USER_PROMPT}\n-----")
+    FULL_PROMPT = BASE_PROMPT + f"\nUSER: {USER_PROMPT}\n"
+    response = llm.invoke(FULL_PROMPT)
 
-    # return response
-    return
+    # Execute commands
+    execution_process(parse_llm_output(response))
+
+    logging.info("-----Request End-----")
+    return response
 
 
-student_llm(input_prompt="can you talk to me about the sightseeings of amsterdam?")
+student_llm(input_prompt="add hiking in Kaiserslautern to my workout context")
