@@ -1,7 +1,10 @@
 import unittest
 from unittest.mock import patch, call
+import logging
+from itertools import permutations
+from functools import reduce
+
 import llm_communication
-from llm_communication import logging
 from llm_communication import (
     todo_add,
     todo_mark_as_done,
@@ -11,8 +14,16 @@ from llm_communication import (
     parse_llm_output,
     get_tasks_data,
 )
-from itertools import permutations
-from functools import reduce
+
+
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s [%(levelname)s] %(message)s",
+    handlers=[
+        logging.FileHandler("debug.log"),
+        # logging.StreamHandler()
+    ],
+)
 
 # Reading config variables
 with open("./aws_api.key", "r") as f:

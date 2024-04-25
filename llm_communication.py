@@ -14,8 +14,11 @@ import re
 from collections import defaultdict
 import time
 
-from openweathermap import OpenWeatherMapAPIWrapper
-from langchain.agents import AgentType, initialize_agent, load_tools
+from RAG_utils import OpenWeatherMapAPIWrapper, LLAMA2
+
+from langchain.agents import AgentExecutor, Tool, create_json_chat_agent
+from langchain.prompts.prompt import PromptTemplate
+
 import numpy as np
 
 logging.basicConfig(
@@ -27,7 +30,7 @@ logging.basicConfig(
     ],
 )
 
-# Reading config variables
+# REMOVE LATER
 with open("./aws_api_quota_remaining", "r") as f:
     aws_api_quota_remaining = int(f.readlines()[0].strip())
 
@@ -527,6 +530,7 @@ def execution_process(queue):
             output = func(**func_params)
 
 
+# REMOVE LATER
 def llama_generate(
     prompt, api_token, max_gen_len=1024, temperature=0.2, top_p=0.9, retries=3
 ):
@@ -648,23 +652,40 @@ def student_llm(input_prompt, cleanup=False):
         reset_todocli()
 
     logging.info("-----Request Start-----")
-    # LangChain preparation
-    ## Prompt
-    USER_PROMPT = f"""
-here is the list of my current tasks in JSON format:
-{get_tasks_data()}
-instruction: {input_prompt}"""
-    logging.info(f"\nuser prompt:\n-----{USER_PROMPT}\n-----")
-    FULL_PROMPT = BASE_PROMPT + f"\nUSER: {USER_PROMPT}\n"
 
     ## Tools
-    tools = []
-    agent_chain = initialize_agent(
-        tools=tools, llm=None, agent=AgentType.ZERO_SHOT_REACT_DESCRIPTION, verbose=True
-    )
+    tools = [
+        Tool(
+            name="weather",
+            func=OpenWeatherMapAPIWrapper().run,
+            description="""Can be used to get the forecast weather at a particular location and date.""",
+        ),
+    ]
 
-    response = llama_generate(FULL_PROMPT, AWS_API_KEY)
-    execution_process(parse_llm_output(response))
-    logging.info("-----Request End-----")
+    llm = LLAMA2()
 
-    return response
+    with open("./agent_prompt_template.txt", "r") as f:
+        agent_prompt_template = f.read()
+    agent_prompt = PromptTemplate.from_template(agent_prompt_template)
+
+    agent = create_json_chat_agent(llm, tools, agent_prompt)
+    agent_executor = AgentExecutor(agent=agent, tools=tools, verbose=True)
+    result = agent_executor.invoke({"input": input_prompt})
+    output = result["output"]
+    print(output)
+
+#     ## Prompt
+#     USER_PROMPT = f"""
+# here is the list of my current tasks in JSON format:
+# {get_tasks_data()}
+# instruction: {input_prompt}"""
+#     logging.info(f"\nuser prompt:\n-----{USER_PROMPT}\n-----")
+#     FULL_PROMPT = BASE_PROMPT + f"\nUSER: {USER_PROMPT}\n"
+#     execution_process(parse_llm_output(response))
+#     logging.info("-----Request End-----")
+
+    # return response
+    return
+
+
+student_llm(input_prompt="can you talk to me about the sightseeings of amsterdam?")
