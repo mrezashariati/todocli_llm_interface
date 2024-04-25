@@ -692,6 +692,3 @@ def student_llm(input_prompt, cleanup=False):
 
     logging.info("-----Request End-----")
     return response
-
-
-student_llm(input_prompt="add hiking in Kaiserslautern to my workout context")
