@@ -146,6 +146,7 @@ def todo_list(context="", flat=False, tidy=False):
 
 def todo_add(
     title,
+    ask_confirmation=False,
     deadline=None,
     start=None,
     context=None,
@@ -663,7 +664,7 @@ def student_llm(input_prompt, cleanup=False):
             description="""Can be used to get the forecast weather at a particular CITY and DATE.\
                   Only use it when an outdoor activity has been mentioned EXPLICITLY in user's task.\
                       the city and date have to be visibly present and immediately in user's request.\
-                          It is based on your judgement whether an activity belongs to outdoor activities.""",
+                        It is based on your judgement whether an activity belongs to outdoor activities.""",
         ),
     ]
     with open("./agent_prompt_template.txt", "r") as f:
@@ -678,10 +679,10 @@ def student_llm(input_prompt, cleanup=False):
 
     ## Task Manager
     USER_PROMPT = (
-        f"weather check result: {agent_output}\n"
-        + "here is the list of my current tasks in JSON format:\n"
+        "here is the list of my current tasks in JSON format:\n"
         + f"{get_tasks_data()}\n"
-        + f"instruction: {input_prompt}"
+        + f"instruction: {input_prompt}\n"
+        + f"<<weather check report>>: {agent_output}"
     )
     logging.info(f"\nuser prompt:\n-----{USER_PROMPT}\n-----")
     FULL_PROMPT = BASE_PROMPT + f"\nUSER: {USER_PROMPT}\n"
