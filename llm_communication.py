@@ -533,7 +533,7 @@ def parse_llm_output_and_populate_commands(text):
                 # TODO: add weather check to log message
                 confirmation_needed = True
                 # confirmation_message += f["log"] + "\n"
-            execution_queue.append((func, func_params, f["log"]))
+            execution_queue.append((func, func_params, f.get("log", "")))
 
     if confirmation_needed and confirmation_mechanism_enabled:
         # first callback: confiremd, second callback: not confirmed

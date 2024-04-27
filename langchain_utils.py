@@ -26,7 +26,7 @@ logging.basicConfig(
 class LLAMA2(LLM):
     api_url = "https://6xtdhvodk2.execute-api.us-west-2.amazonaws.com/dsa_llm/generate"
     retries = 3
-    max_gen_len = 512
+    max_gen_len = 1024
     temperature = 0.2
     top_p = 0.9
 
