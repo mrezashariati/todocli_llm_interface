@@ -1,5 +1,3 @@
-"""Util that calls OpenWeatherMap using PyOWM."""
-
 from typing import Any, Optional
 import logging
 import time
@@ -28,7 +26,7 @@ logging.basicConfig(
 class LLAMA2(LLM):
     api_url = "https://6xtdhvodk2.execute-api.us-west-2.amazonaws.com/dsa_llm/generate"
     retries = 3
-    max_gen_len = 1024
+    max_gen_len = 512
     temperature = 0.2
     top_p = 0.9
 
@@ -127,7 +125,7 @@ class OpenWeatherMapAPIWrapper(BaseModel):
     def run(self, city_date) -> str:
         """Get the forcasted weather information for a specified city and date.
         There is only one parameter. The city_date parameter should be formatted as: CITY WITHOUT COUNTRY, DATE. Nothing more or less. The date part should be formatted like YYYY-MM-DD HH:MM:SS
-        DO NOT EVER INPUT COUNTRY.
+        do not ever input country.
         """
         try:
             location, date = city_date.split(",")
@@ -140,5 +138,5 @@ class OpenWeatherMapAPIWrapper(BaseModel):
             w = observation.get_weather_at(date)
         except (NotFoundError, ValueError) as e:
             logging.info(e)
-            return f"Failed to execute. Weather forecast not available."
+            return f"Tool failed to execute. Weather forecast information not available. No response can be provided to the user."
         return self._format_weather_info(location, date, w)

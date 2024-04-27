@@ -9,6 +9,18 @@ if "cleanup_intended" not in st.session_state:
 if "raw_llm_response" not in st.session_state:
     st.session_state["raw_llm_response"] = ""
 
+if "confirmation_needed" not in st.session_state:
+    st.session_state["confirmation_needed"] = False
+
+if "confirmation_message" not in st.session_state:
+    st.session_state["confirmation_message"] = ""
+
+if "confirmation_callback_confirmed" not in st.session_state:
+    st.session_state["confirmation_callback_confirmed"] = None
+
+if "confirmation_callback_not_confirmed" not in st.session_state:
+    st.session_state["confirmation_callback_not_confirmed"] = None
+
 
 def set_cleanup_intended():
     # Set the state to indicate the action is confirmed
@@ -19,7 +31,6 @@ def perform_cleanup():
     # Perform the action
     st.session_state["cleanup_intended"] = False  # Reset confirmation flag
     reset_todocli()
-    st.rerun()
 
 
 # Streamlit interface
@@ -46,17 +57,37 @@ data = data.drop(columns=["sort_by"], errors="ignore")
 cols = st.columns([1, 4, 1])
 with cols[1]:
     st.dataframe(data, width=500)
+
+    # Request Submission
     if st.button("Submit"):
         st.session_state["raw_llm_response"] = student_llm(user_input, cleanup=False)
         st.rerun()
-    if st.button("Remove All Tasks"):
-        set_cleanup_intended()
+
+    # Confirmation
+    if st.session_state["confirmation_needed"]:
+        st.write(st.session_state["confirmation_message"])
+        st.session_state["confirmation_needed"] = False
+        st.session_state["confirmation_message"] = ""
+        st.button(
+            "Yes, looks good!",
+            on_click=st.session_state["confirmation_callback_confirmed"],
+        )
+        st.button(
+            "No, stop that!",
+            on_click=st.session_state["confirmation_callback_not_confirmed"],
+        )
+
+    # Tasks Deletion
+    st.button("Remove All Tasks", on_click=set_cleanup_intended)
     if st.session_state["cleanup_intended"]:
         st.write("Are you sure you want to perform this action?")
-        if st.button("Yes, I'm sure"):
-            perform_cleanup()
+        st.button("Yes, I'm sure", on_click=perform_cleanup)
         if st.button("No"):
             st.session_state["cleanup_intended"] = False
             st.rerun()
 
-    st.text_area("Raw LLM Response", st.session_state["raw_llm_response"], height=500)
+    # # Log Display
+    # if st.session_state["raw_llm_response"]:
+    #     st.text_area(
+    #         "Raw LLM Response", st.session_state["raw_llm_response"], height=500
+    #     )

@@ -14,12 +14,14 @@ import re
 from collections import defaultdict
 import time
 
-from RAG_utils import OpenWeatherMapAPIWrapper, LLAMA2
+from langchain_utils import OpenWeatherMapAPIWrapper, LLAMA2
 
 from langchain.agents import AgentExecutor, Tool, create_json_chat_agent
 from langchain.prompts.prompt import PromptTemplate
 
 import numpy as np
+
+from app_utils import get_user_confirmation, set_raw_llm_response
 
 logging.basicConfig(
     level=logging.INFO,
@@ -30,13 +32,9 @@ logging.basicConfig(
     ],
 )
 
-# REMOVE LATER
-with open("./aws_api_quota_remaining", "r") as f:
-    aws_api_quota_remaining = int(f.readlines()[0].strip())
-
-AWS_API_KEY = os.environ["AWS_API_KEY"]
 OPENWEATHERMAP_API_KEY = os.environ["OPENWEATHERMAP_API_KEY"]
-
+execution_queue = []
+confirmation_mechanism_enabled = True
 
 with open("./base_prompt.txt", "r") as f:
     BASE_PROMPT = f.read()
@@ -302,7 +300,6 @@ def todo_search(
     Returns:
         None
     """
-    # TODO: return proper output and edit the func doc
     command = f"todo search '{term}'"
     if context:
         command += f""" --context \"{context}\""""
@@ -493,23 +490,36 @@ functions_dict = {
 }
 
 
-def parse_llm_output(text):
+def empty_execution_queue():
+    global execution_queue
+    execution_queue = []
+
+
+def parse_llm_output_and_populate_commands(text):
     global functions_dict
+    global execution_queue
     execution_queue = []
     try:
         processed = text.split("<JSON>")[1].split("</JSON>")[0].strip()
     except Exception as e:
-        logging.info("Bad LLM response structure. Doing nothing")
-        return execution_queue
+        logging.info("Bad LLM response structure.")
+        return
 
     # correct some common mistakes in json formatting
     # Replace 'True' with 'true' and 'False' with 'false'
     processed = re.sub(r"\bTrue\b", "true", processed)
     processed = re.sub(r"\bFalse\b", "false", processed)
 
+    # Replace "None" with "null"
+    processed = re.sub(r"None", "null", processed)
+
     # changes the formatting of datetime to the specified format
     processed = standardize_date_format(processed)
     processed = json.loads(processed)
+
+    confirmation_needed = False
+    confirmation_message = "It seems your are going to participate in an outdoor activity and the weather condition is not suitable. I recommend to reschedule your task. Are you sure you want to add the task anyway?"
+
     for f in processed:
         func = (
             functions_dict[f["function"]] if f["function"] in functions_dict else None
@@ -519,58 +529,29 @@ def parse_llm_output(text):
             actual_named_args = inspect.getfullargspec(func).args
             matching = string_matcher(llm_named_args, actual_named_args)
             func_params = {matching[k]: val for k, val in f["parameters"].items()}
+            if "ask_confirmation" in func_params and func_params["ask_confirmation"]:
+                # TODO: add weather check to log message
+                confirmation_needed = True
+                # confirmation_message += f["log"] + "\n"
             execution_queue.append((func, func_params, f["log"]))
 
-    return execution_queue
+    if confirmation_needed and confirmation_mechanism_enabled:
+        # first callback: confiremd, second callback: not confirmed
+        # second callback can be discarded, but emptying execution queue won't hurt.
+        get_user_confirmation(
+            message=confirmation_message,
+            callbacks=(execute_commands, empty_execution_queue),
+        )
+
+    return
 
 
-def execution_process(queue):
-    if queue:
-        for func, func_params, log in queue:
+def execute_commands():
+    global execution_queue
+    if execution_queue:
+        for func, func_params, log in execution_queue:
             logging.info(log)
             output = func(**func_params)
-
-
-# REMOVE LATER
-def llama_generate(
-    prompt, api_token, max_gen_len=1024, temperature=0.2, top_p=0.9, retries=3
-):
-    global aws_api_quota_remaining
-    url = "https://6xtdhvodk2.execute-api.us-west-2.amazonaws.com/dsa_llm/generate"
-    body = {
-        "prompt": prompt,
-        "max_gen_len": max_gen_len,
-        "temperature": temperature,
-        "top_p": top_p,
-        "api_token": api_token,
-    }
-    result = ""
-    for i in range(retries):
-        try:
-            res = requests.post(url, json=body, timeout=30)
-        except requests.exceptions.Timeout as e:
-            logging.info(f"LLM response timeout")
-            time.sleep(5)
-            continue
-
-        aws_api_quota_remaining -= 1
-        with open("./aws_api_quota_remaining", "w") as f:
-            f.write(str(aws_api_quota_remaining))
-        logging.info(f"ramining AWS API calls: {aws_api_quota_remaining}")
-        try:
-            result = json.loads(res.text)["body"]["generation"]
-            break
-        except KeyError:
-            logging.info(f"LLM response is empty. The response text:\n{res.text}")
-            time.sleep(5)
-
-    if result:
-        logging.info(
-            f"Raw LLM response:\n----------\n{result}\n----------",
-        )
-        return result
-    else:
-        raise Exception("Failed to get response from LLM")
 
 
 def string_matcher(list_a, list_b):
@@ -687,9 +668,10 @@ def student_llm(input_prompt, cleanup=False):
     logging.info(f"\nuser prompt:\n-----{USER_PROMPT}\n-----")
     FULL_PROMPT = BASE_PROMPT + f"\nUSER: {USER_PROMPT}\n"
     response = llm.invoke(FULL_PROMPT)
+    set_raw_llm_response(response)
 
     # Execute commands
-    execution_process(parse_llm_output(response))
-
-    logging.info("-----Request End-----")
-    return response
+    parse_llm_output_and_populate_commands(response)
+    ## Warning:  this part of code and everything after is not guranteed to run. the flow of the program may change in parse_llm_output_and_populate_commands. Reason: streamlit and user confirmation.
+    execute_commands()
+    return
