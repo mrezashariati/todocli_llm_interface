@@ -50,6 +50,7 @@ class LLAMA2(LLM):
             "api_token": os.environ["AWS_API_KEY"],
         }
         result = ""
+        # Retry for i times if request timed out
         for i in range(self.retries):
             try:
                 res = requests.post(self.api_url, json=body, timeout=30)

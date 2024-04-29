@@ -54,13 +54,14 @@ st.markdown(page_element, unsafe_allow_html=True)
 # Tasks table
 data = pd.read_json(get_tasks_data())
 data = data.drop(columns=["sort_by"], errors="ignore")
+
 cols = st.columns([1, 4, 1])
 with cols[1]:
     st.dataframe(data, width=500)
 
     # Request Submission
     if st.button("Submit"):
-        st.session_state["raw_llm_response"] = student_llm(user_input, cleanup=False)
+        student_llm(user_input, cleanup=False)
         st.rerun()
 
     # Confirmation

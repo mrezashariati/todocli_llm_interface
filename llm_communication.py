@@ -7,12 +7,10 @@ import shutil
 import os
 from pathlib import Path
 import logging
-import requests
 from difflib import SequenceMatcher
 import inspect
 import re
 from collections import defaultdict
-import time
 
 from langchain_utils import OpenWeatherMapAPIWrapper, LLAMA2
 
@@ -54,9 +52,9 @@ def log_and_exec_process(command, func_name):
     # logging.info(f"{func_name} finished")
     output = process_bash_output(p.stdout)
     if output:
-        # logging.info(
-        #     f"command output:\n-----\n{output}\n-----",
-        # )
+        logging.info(
+            f"command output:\n-----\n{output}\n-----",
+        )
         return output
 
 
@@ -71,7 +69,7 @@ def get_tasks_data():
         tasks_flat_list += temp_str
     tasks_history = todo_history()
 
-    # Parse todo --flat output
+    # Parse todo search output
     pattern = re.compile(
         # r"^\s(\w+)\s+\|\s+([^★#]+)(?:★(\d+))?\s?(?:#(\w+))?",
         r"^\s(\w+)\s+\|\s+(\[DONE\])?([^★#\U0000231b\n]+)(?:\U0000231b[^★#]+)?(?:★(\d+))?\s?(?:#(\w+))?",
@@ -179,9 +177,7 @@ def todo_add(
     if priority:
         command += f" --priority {priority}"
     if depends_on:
-        command += " --depends-on"
-        for dep in depends_on:
-            command += f" {dep}"
+        command += f' --depends-on "{depends_on}"'
     if period:
         command += f" --period {period}"
     if front:
@@ -530,7 +526,6 @@ def parse_llm_output_and_populate_commands(text):
             matching = string_matcher(llm_named_args, actual_named_args)
             func_params = {matching[k]: val for k, val in f["parameters"].items()}
             if "ask_confirmation" in func_params and func_params["ask_confirmation"]:
-                # TODO: add weather check to log message
                 confirmation_needed = True
                 # confirmation_message += f["log"] + "\n"
             execution_queue.append((func, func_params, f.get("log", "")))

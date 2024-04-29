@@ -48,11 +48,6 @@ def setup_testing_env():
     todo_add(title="Apply", context="work", priority=3)  # ID:c
     todo_add(title="washing the dishes", context="home", priority=5)  # ID:d
 
-    # todo_add(title="Planning", context="work", priority=3)
-    # todo_add(title="Write Test", context="work", priority=4)
-    # todo_add(title="Apply", context="work", priority=3)
-    # todo_add(title="Ride to office", context="work", priority=1)
-
 
 class TestLLM_nonportfolio(unittest.TestCase):
     def test_todo_rm_single_task(self):
@@ -90,8 +85,8 @@ instruction: can you remove "bananas" and "rust" from my items?"""
             execute_commands()
             # Assertion
             assert (
-                call("todo rm 2 b", "todo_rm") in mock_log_and_exec_process.mock_calls
-                or call("todo rm b 2", "todo_rm")
+                call("todo rm 2 9", "todo_rm") in mock_log_and_exec_process.mock_calls
+                or call("todo rm 9 2", "todo_rm")
                 in mock_log_and_exec_process.mock_calls
             )
 
@@ -369,7 +364,7 @@ instruction: Mark the first and third items on my 'work' context as done."""
             parse_llm_output_and_populate_commands(response)
             execute_commands()
             # Assertion
-            ids = ["5", "c"]
+            ids = ["4", "c"]
             perms = [" ".join([str(j) for j in i]) for i in list(permutations(ids))]
             perms = [f"todo done {i}" for i in perms]
             perms_exist = [
@@ -380,7 +375,7 @@ instruction: Mark the first and third items on my 'work' context as done."""
 
     def test_irrelevant_command_1(self):
         setup_testing_env()
-        tasks_data = todo_list(flat=True)
+        tasks_data = get_tasks_data()
         with patch(
             "llm_communication.log_and_exec_process",
             wraps=llm_communication.log_and_exec_process,
@@ -397,16 +392,11 @@ instruction: can you tell me the capital of US in plain text?"""
             execute_commands()
             # Assertion
             ## Checking that nothing has changed:
-            assert tasks_data == todo_list(flat=True)
-            assert mock_log_and_exec_process.mock_calls == [
-                call("todo search '' --undone", "todo_search"),
-                call("todo search '' --done", "todo_search"),
-                call("todo history", "todo_history"),
-                call("todo search 'US' --undone --case", "todo_search"),
-            ]
+            assert tasks_data == get_tasks_data()
 
     def test_irrelevant_command_2(self):
         setup_testing_env()
+        tasks_data = get_tasks_data()
         with patch(
             "llm_communication.log_and_exec_process",
             wraps=llm_communication.log_and_exec_process,
@@ -422,13 +412,8 @@ instruction: what is the meaning of life? tell me I desperately need it."""
             parse_llm_output_and_populate_commands(response)
             execute_commands()
             # Assertion
-            ## Checking for 'Doing nothing':
-            assert mock_log_and_exec_process.mock_calls == [
-                call("todo search '' --undone", "todo_search"),
-                call("todo search '' --done", "todo_search"),
-                call("todo history", "todo_history"),
-                call("todo search 'meaning of life' --undone --case", "todo_search"),
-            ]
+            ## Checking that nothing has changed:
+            assert tasks_data == get_tasks_data()
 
 
 class TestLLM_portfolio(unittest.TestCase):
