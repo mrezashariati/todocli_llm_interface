@@ -255,9 +255,7 @@ def todo_task(
     if title:
         command += f""" --title \"{title}\""""
     if depends_on:
-        command += " --depends-on"
-        for dep in depends_on:
-            command += f" {dep}"
+        command += f' --depends-on "{depends_on}"'
     if period:
         command += f" --period {period}"
     if front is not None:
@@ -563,10 +561,13 @@ def get_task_id(task_name):
     # Fetch the ID of the corresponding task_name
     ## if task_name is identical to an ID, it is treated as an ID, else I'll search the task names for it.
     task_name = str(task_name)
-
-    ids, names = zip(
-        *[(task["id"], task["title"]) for task in json.loads(get_tasks_data())]
-    )
+    data = json.loads(get_tasks_data())
+    if data:
+        ids, names = zip(
+            *[(task["id"], task["title"]) for task in data]
+        )
+    else:
+        ids, names = [], []
 
     if task_name in ids:
         return task_name
